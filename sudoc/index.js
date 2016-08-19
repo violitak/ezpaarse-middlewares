@@ -47,7 +47,7 @@ module.exports = function () {
     var ec = buffer.shift();
     if (!ec) {
       busy = false;
-      return drain();
+      return self.drain();
     }
 
     report.inc('general', 'sudoc-queries');
@@ -141,7 +141,7 @@ module.exports = function () {
       if (busy) { return; }
 
       busy = true;
-      saturate();
+      self.saturate();
 
       pullBuffer();
     });
