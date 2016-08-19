@@ -89,7 +89,8 @@ module.exports = function () {
         }
 
         var notFound = [];
-        var results  = list.map(item => item.id);
+        var results  = {};
+        list.forEach(item => { results[item.id] = item; });
 
         packet.forEach(function (ec) {
           var item = results[ec[0].unitid];
