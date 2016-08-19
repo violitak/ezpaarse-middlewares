@@ -47,7 +47,7 @@ module.exports = function () {
         return checkNextEC();
       }
 
-      cache.get(ec[0].unitid.toLowerCase(), function (err, cachedDoc) {
+      cache.get(ec[0].unitid, function (err, cachedDoc) {
         if (cachedDoc) {
           enrichEc(ec, cachedDoc);
           ec[1]();
@@ -89,49 +89,46 @@ module.exports = function () {
         }
 
         var notFound = [];
+        var results  = list.map(item => item.id);
 
         packet.forEach(function (ec) {
-          var item;
-
-          for (let i = list.length - 1; i >= 0; i--) {
-
-            if (ec[0].unitid.toLowerCase() == list[i]['id'].toLowerCase()) {
-              item = list[i];
-              break;
-            }
-          }
+          var item = results[ec[0].unitid];
 
           if (item) {
             enrichEc(ec, item);
           } else {
             notFound.push(ec[0].unitid);
           }
-          cacheResults(item);
 
           ec[1]();
         });
 
         function cacheNotFound() {
-          var doi = notFound.pop();
-          if (!doi) { return setTimeout(function() { drainBuffer(callback); }, throttle); }
+          var unitid = notFound.pop();
+          if (!unitid) { return setTimeout(function() { drainBuffer(callback); }, throttle); }
 
-          cache.set(doi.toLowerCase(), {}, function (err, result) {
-            if (err) { report.inc('general', 'crossref-cache-fail'); }
+          cache.set(unitid, {}, function (err) {
+            if (err) { report.inc('general', 'istex-cache-fail'); }
             cacheNotFound();
           });
         }
 
-        function cacheResults(item) {
+        (function cacheResults() {
+          var item = list.pop();
           if (!item) { return cacheNotFound(); }
-          cache.set(item['id'].toLowerCase(), item, function (err, result) {
-            if (err) { report.inc('general', 'crossref-cache-fail'); }
+
+          cache.set(item.id, item, function (err) {
+            if (err) { report.inc('general', 'istex-cache-fail'); }
             cacheResults();
           });
-        }
+        })();
       });
     });
   }
-  // enrich ec with api istex and to cache the data in database
+
+  /**
+   * Enrich ec with api istex and to cache the data in database
+   */
   function enrichEc(ec, result) {
 
     report.inc('general', 'istex-queries');
