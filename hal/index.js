@@ -27,9 +27,8 @@ module.exports = function () {
 
   if (!activated) { return function (ec, next) { next(); }; }
 
+  var self     = this;
   var report   = this.report;
-  var saturate = this.saturate;
-  var drain    = this.drain;
   var pending  = new Map();
   var nbErrors = 0;
   var buffer   = [];
@@ -50,7 +49,7 @@ module.exports = function () {
     var ec = buffer.shift();
     if (!ec) {
       busy = false;
-      return drain();
+      return self.drain();
     }
 
     report.inc('general', 'hal-queries');
@@ -111,7 +110,7 @@ module.exports = function () {
       if (busy) { return; }
 
       busy = true;
-      saturate();
+      self.saturate();
 
       pullBuffer();
     });
@@ -122,7 +121,7 @@ module.exports = function () {
 
     cache.checkIndexes(ttl, function (err) {
       if (err) {
-        this.logger.error('HAL: failed to ensure indexes');
+        self.logger.error('HAL: failed to ensure indexes');
         return reject(new Error('failed to ensure indexes for the cache of HAL'));
       }
 
