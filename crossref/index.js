@@ -8,17 +8,16 @@ var doiPattern = /^10\.[0-9]{4,}\/[a-z0-9\-\._:;\(\)\/]+$/i;
  * Enrich ECs with crossref data
  */
 module.exports = function () {
+  var self     = this;
   var req      = this.request;
   var report   = this.report;
-  var saturate = this.saturate;
-  var drain    = this.drain;
 
   var noCrossref = (req.header('crossref-enrich') || '').toLowerCase() == 'false';
 
   var ttl = parseInt(req.header('crossref-ttl')) || 3600 * 24 * 7;
 
   if (noCrossref) {
-    this.logger.verbose('Crossref enrichment not activated');
+    self.logger.verbose('Crossref enrichment not activated');
     return function (ec, next) { next(); };
   }
 
@@ -37,10 +36,10 @@ module.exports = function () {
   var busy          = false;
   var finalCallback = null;
 
-  this.logger.verbose('Crossref enrichment activated');
-  this.logger.verbose('Crossref throttle: %dms', throttle);
-  this.logger.verbose('Crossref paquet size: %d', paquetSize);
-  this.logger.verbose('Crossref buffer size: %d', bufferSize);
+  self.logger.verbose('Crossref enrichment activated');
+  self.logger.verbose('Crossref throttle: %dms', throttle);
+  self.logger.verbose('Crossref paquet size: %d', paquetSize);
+  self.logger.verbose('Crossref buffer size: %d', bufferSize);
 
   report.set('general', 'crossref-queries', 0);
   report.set('general', 'crossref-fails', 0);
@@ -91,7 +90,7 @@ module.exports = function () {
 
       if (packet.length === 0) {
 
-        this.logger.silly('Crossref: no doi or pii in the paquet');
+        self.logger.silly('Crossref: no doi or pii in the paquet');
         return setImmediate(function () { drainBuffer(callback); });
       }
 
@@ -111,8 +110,8 @@ module.exports = function () {
 
           if (err || !Array.isArray(list)) {
 
-            if (err) { this.logger.error('Crossref: the query failed', err); }
-            else     { this.logger.error('Crossref: got an invalid response'); }
+            if (err) { self.logger.error('Crossref: the query failed', err); }
+            else     { self.logger.error('Crossref: got an invalid response'); }
 
             report.inc('general', 'crossref-fails');
 
@@ -166,8 +165,8 @@ module.exports = function () {
 
           if (err || !Array.isArray(list)) {
 
-            if (err) { this.logger.error('Crossref: the query failed', err); }
-            else     { this.logger.error('Crossref: got an invalid response'); }
+            if (err) { self.logger.error('Crossref: the query failed', err); }
+            else     { self.logger.error('Crossref: got an invalid response'); }
 
             report.inc('general', 'crossref-fails');
 
@@ -258,11 +257,11 @@ module.exports = function () {
     if (buffer.length > bufferSize && !busy) {
 
       busy = true;
-      saturate();
+      self.saturate();
       drainBuffer(function () {
 
         busy = false;
-        drain();
+        self.drain();
       });
     }
   }
@@ -270,7 +269,7 @@ module.exports = function () {
   return new Promise(function (resolve, reject) {
     cache.checkIndexes(ttl, function (err) {
       if (err) {
-        this.logger.error('Crossref: failed to ensure indexes');
+        self.logger.error('Crossref: failed to ensure indexes');
         return reject(new Error('failed to ensure indexes for the cache of Crossref'));
       }
 
