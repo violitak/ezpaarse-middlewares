@@ -167,27 +167,26 @@ module.exports = function () {
       ec[0]['publication_date'] = result.copyrightDate;
     }
 
+    let genre = result.genre && result.genre[0];
 
-    if (result.genre && result.genre[0]) {
-      ec[0]['istex_genre'] = result.genre[0];
-      switch (ec[0]['istex_rtype']) {
-      case 'fulltext':
-        if (data[result.genre[0]] && data[result.genre[0]] !== null) {
-          ec[0].rtype = data[result.genre[0]];
-        } else {
-          ec[0]['rtype'] = 'MISC';
-        }
-        break;
-      case 'metadata':
-        ec[0].rtype = 'METADATA';
-        break;
-      case 'enrichments':
-        ec[0].rtype = 'METADATA';
-        break;
-      default:
-        ec[0]['rtype'] = 'MISC';
-      }
+    if (genre) {
+      ec[0]['istex_genre'] = genre;
     }
+
+    switch (ec[0]['istex_rtype']) {
+    case 'fulltext':
+      ec[0]['rtype'] = data[genre] || 'MISC';
+      break;
+    case 'metadata':
+      ec[0].rtype = 'METADATA';
+      break;
+    case 'enrichments':
+      ec[0].rtype = 'METADATA';
+      break;
+    default:
+      ec[0]['rtype'] = 'MISC';
+    }
+
     if (result.language && result.language[0]) {
       ec[0].language = result.language[0];
     }
