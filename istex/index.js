@@ -72,7 +72,7 @@ module.exports = function () {
 
       var unitids = packet.map(function (ec) { return ec[0].unitid; });
 
-      report.inc('general', 'Istex-queries');
+      report.inc('general', 'istex-queries');
       self.logger.verbose('Istex: resolving a paquet of %d ECs', packet.length);
 
       istex.findlot(unitids, function (err, list) {
@@ -82,7 +82,7 @@ module.exports = function () {
           if (err) { self.logger.error('Istex: the query failed', err); }
           else     { self.logger.error('Istex: got an invalid response'); }
 
-          report.inc('general', 'Istex-fails');
+          report.inc('general', 'istex-fails');
 
           packet.forEach(function (ec) { ec[1](); });
           return setTimeout(function() { drainBuffer(callback); }, throttle);
@@ -131,9 +131,6 @@ module.exports = function () {
    * Enrich ec with api istex and to cache the data in database
    */
   function enrichEc(ec, result) {
-
-    report.inc('general', 'istex-queries');
-    // interrogate the api istex for recovered metadata with unitid
 
     if (result.corpusName) {
       ec[0]['publisher_name'] = result.corpusName;
