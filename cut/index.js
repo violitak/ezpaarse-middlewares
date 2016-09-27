@@ -17,10 +17,10 @@ try {
  * cut fields login
  */
 module.exports = function () {
-  var activated    = (this.request.header('cut') || '').toLowerCase() === 'true';
-  var cutfields    = this.request.header('cut-fields') || '';
-  var regex        = this.request.header('cut-regex') || '';
-  var fieldsCreate = this.request.header('cut-fields-create') || '';
+  var activated        = (this.request.header('cut') || '').toLowerCase() === 'true';
+  var cutField         = this.request.header('cut-field') || '';
+  var cutRegex         = this.request.header('cut-regex') || '';
+  var cutFieldsCreated = this.request.header('cut-create-fields') || '';
 
   if (!activated) { return function (ec, next) { next(); }; }
 
@@ -46,13 +46,13 @@ module.exports = function () {
       }
 
       // cutting fields defined in header with a regex and put a value in new fields
-      if (cutfields && regex && fieldsCreate) {
+      if (cutField && cutRegex && cutFieldsCreated) {
         var opfeilds = [];
-        var regfields = new RegExp(regex);
+        var regfields = new RegExp(cutRegex);
         var match = '';
-        if (ec[cutfields]) {
-          if ((match = regfields.exec(ec[cutfields])) !== null) {
-            var fields = fieldsCreate.split(',');
+        if (ec[cutField]) {
+          if ((match = regfields.exec(ec[cutField])) !== null) {
+            var fields = cutFieldsCreated.split(',');
 
             for (var j = 0; j < fields.length; j++) {
               opfeilds[j] = fields[j];
