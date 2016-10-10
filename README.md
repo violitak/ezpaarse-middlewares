@@ -72,3 +72,19 @@ module.exports = function mandatoryField() {
   };
 };
 ```
+
+### Use of promises : ###
+```javascript
+module.exports = function mandatoryField() {
+
+  return new Promise(function (resolve, reject) {
+    if ('foo') {
+      return reject(new Error('initialization failed for some reason'));
+    }
+
+    resolve(function process(ec, next) {
+      // Processing function
+    });
+  })
+};
+```
