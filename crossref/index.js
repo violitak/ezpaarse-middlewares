@@ -72,7 +72,7 @@ module.exports = function () {
 
       cache.get(ec[0].doi, function (err, cachedDoc) {
         if (cachedDoc) {
-          aggregate(cachedDoc, '', ec);
+          aggregate(cachedDoc, ec);
           ec[1]();
         } else {
           packet.push(ec);
@@ -134,7 +134,7 @@ module.exports = function () {
               }
 
               if (item) {
-                item = aggregate(item, '', ec);
+                item = aggregate(item, ec);
               } else {
                 notFound.push(ec[0].doi);
               }
@@ -189,7 +189,7 @@ module.exports = function () {
               }
 
               if (item) {
-                item = aggregate(item, '', ec);
+                item = aggregate(item, ec);
               } else {
                 notFound.push(ec[0].pii);
               }
@@ -215,7 +215,7 @@ module.exports = function () {
     });
   }
 
-  function aggregate(item, fieldsAggregate, ec) {
+  function aggregate(item, ec) {
     if (item['type'] && /([a-z]+)\-([a-z]+)/.test(item['type'])) {
       ec[0]['publication_title'] = ec[0]['publication_title'] || item['container-title'];
     } else {
@@ -227,7 +227,7 @@ module.exports = function () {
     if (item['subject'] && Array.isArray(item['subject'])) {
       ec[0]['subject'] = item['subject'].join(', ');
     }
-
+    ec[0]['doi'] = ec[0]['doi'] || item['DOI'];
     ec[0]['publisher_name'] = ec[0]['publisher_name'] || item['publisher'];
     ec[0]['type'] = item['type'];
 
