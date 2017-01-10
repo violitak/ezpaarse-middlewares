@@ -150,6 +150,9 @@ module.exports = function () {
       if (result.host.eisbn) {
         ec[0]['online_identifier'] = result.host.eisbn[0];
       }
+      if (result.host.eissn) {
+        ec[0]['online_identifier'] = result.host.eissn[0];
+      }
       if (result.doi) {
         ec[0].doi = result.doi[0];
       }
