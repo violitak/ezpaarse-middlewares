@@ -159,6 +159,9 @@ module.exports = function () {
       if (result.host.title) {
         ec[0]['publication_title'] = result.host.title;
       }
+      if (result.host.subject) {
+        ec[0]['subject'] = result.host.subject[0].value;
+      }
     }
 
     if (result.publicationDate) {
