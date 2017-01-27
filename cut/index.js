@@ -54,7 +54,7 @@ module.exports = function () {
       }
 
       // cutting fields defined in header with a regex and put a value in new fields
-      if (cutField && cutRegex && newFields) {
+      if (cutField && cutRegex && newFields.length > 0) {
         var regfields = new RegExp(cutRegex);
         var match = '';
         if (ec[cutField]) {
