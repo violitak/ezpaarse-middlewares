@@ -24,6 +24,14 @@ module.exports = function () {
 
   if (!activated) { return function (ec, next) { next(); }; }
 
+  var newFields = cutFieldsCreated.split(',');
+
+  newFields.forEach(field => {
+    if (this.job.outputFields.added.indexOf(field) === -1) {
+      this.job.outputFields.added.push(field);
+    }
+  });
+
   // return function has a work to cut fields login and create new fields with result cutting
   return function cut(ec, next) {
     if (ec) {
@@ -46,21 +54,17 @@ module.exports = function () {
       }
 
       // cutting fields defined in header with a regex and put a value in new fields
-      if (cutField && cutRegex && cutFieldsCreated) {
-        var opfeilds = [];
+      if (cutField && cutRegex && newFields) {
         var regfields = new RegExp(cutRegex);
         var match = '';
         if (ec[cutField]) {
           if ((match = regfields.exec(ec[cutField])) !== null) {
-            var fields = cutFieldsCreated.split(',');
 
-            for (var j = 0; j < fields.length; j++) {
-              opfeilds[j] = fields[j];
-              ec[fields[j]] = match[j + 1];
+            for (var j = 0; j < newFields.length; j++) {
+              ec[newFields[j]] = match[j + 1];
             }
           }
         }
-        this.job.outputFields.added = opfeilds;
       }
     }
 
