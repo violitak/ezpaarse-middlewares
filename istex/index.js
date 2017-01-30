@@ -159,7 +159,7 @@ module.exports = function () {
       if (result.host.title) {
         ec[0]['publication_title'] = result.host.title;
       }
-      if (result.host.subject) {
+      if (result.host.subject && result.host.subject[0]) {
         ec[0]['subject'] = result.host.subject[0].value;
       }
     }
