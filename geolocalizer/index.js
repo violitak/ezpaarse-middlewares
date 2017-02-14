@@ -5,7 +5,7 @@ var hostlocalize = ezpaarse.lib('hostlocalize.js');
 /**
  * Geolocalize ECs
  */
-module.exports = function localizer(job) {
+module.exports = function localizer() {
   this.logger.verbose('Initializing geolocation');
 
   var job = this.job;
