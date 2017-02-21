@@ -67,7 +67,7 @@ module.exports = function () {
         if (err) {
           report.inc('general', 'hal-fails');
           self.logger.error('HAL: ', err.message);
-          return queryHal();
+          return setTimeout(queryHal, throttle);
         }
 
         cache.set(ec.title_id.toString(), doc || {}, function (err) {
