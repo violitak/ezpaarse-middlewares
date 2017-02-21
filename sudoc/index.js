@@ -22,7 +22,6 @@ module.exports = function () {
   var self     = this;
   var report   = this.report;
   var pending  = new Map();
-  var nbErrors = 0;
   var buffer   = [];
   var busy     = false;
 
@@ -50,8 +49,6 @@ module.exports = function () {
       return self.drain();
     }
 
-    report.inc('general', 'sudoc-queries');
-
     var sudoc2method; // service used for sudoc request
 
     if (issnPattern.test(ec.print_identifier)) {
@@ -66,29 +63,40 @@ module.exports = function () {
       return pullBuffer();
     }
 
-    sudoc[sudoc2method](ec.print_identifier, function (err, doc) {
-      if (err) {
-        if (++nbErrors > 5) {
-          self.logger.info('Sudoc : to many errors (request), inactivating... ', err);
-          report.inc('general', 'sudoc-fails');
-          activated = false;
-        }
-        release(ec.print_identifier, null);
-        return setTimeout(pullBuffer, throttle);
+    var maxAttempts = 5;
+    var tries = 0;
+
+    (function querySudoc() {
+      if (++tries > maxAttempts) {
+        const err = new Error(`Failed to query Sudoc ${maxAttempts} times in a row`);
+        return self.job._stop(err);
       }
-      if (! doc) { report.inc('general', 'sudoc-not-found'); }
 
-      cache.set(ec.print_identifier.toString(), doc, function (err) {
-        if (err && ++nbErrors > 5) {
-          self.logger.info('Sudoc : to many errors (cache), inactivating... ', err);
-          report.inc('general', 'sudoc-fails');
-          activated = false;
+      report.inc('general', 'sudoc-queries');
+
+      sudoc[sudoc2method](ec.print_identifier, function (err, doc) {
+        if (err) {
+          if (err) {
+            report.inc('general', 'sudoc-fails');
+            self.logger.error('Sudoc: ', err.message);
+            return setTimeout(querySudoc, throttle);
+          }
+          release(ec.print_identifier, null);
+          return setTimeout(pullBuffer, throttle);
         }
 
-        release(ec.print_identifier, doc || null);
-        setTimeout(pullBuffer, throttle);
+        if (!doc) { report.inc('general', 'sudoc-not-found'); }
+
+        cache.set(ec.print_identifier.toString(), doc || {}, function (err) {
+          if (err) {
+            report.inc('general', 'sudoc-fails');
+          }
+
+          release(ec.print_identifier, doc || null);
+          setTimeout(pullBuffer, throttle);
+        });
       });
-    });
+    })();
   }
 
   /**
@@ -97,22 +105,24 @@ module.exports = function () {
    * @param  {Object} data     SUDOC data to enrich ECs, if any
    */
   function release(printIdentifier, data) {
-    pending.get(printIdentifier).forEach(function(ec) {
+    var result = data && data.query && (data.query.result || data.query.resultNoHolding);
+
+    pending.get(printIdentifier).forEach(function (ec) {
       self.logger.silly('Sudoc : request ', data);
-      if (data && data.query && data.query.result && data.query.result.ppn) {
-        ec[0]['sudoc-ppn'] = data.query.result.ppn;
-        report.inc('general', 'sudoc-enriched-ecs');
-        self.logger.silly('Sudoc : find ', data.query);
-      } else if (data && data.query
-        && data.query.resultNoHolding && data.query.resultNoHolding.ppn) {
-        ec[0]['sudoc-ppn'] = data.query.resultNoHolding.ppn;
+
+      var ppn = result && result.ppn;
+
+      if (ppn) {
+        ec[0]['sudoc-ppn'] = ppn;
         report.inc('general', 'sudoc-enriched-ecs');
         self.logger.silly('Sudoc : find ', data.query);
       } else {
         self.logger.verbose('Sudoc : unknown result %s structure for %s ', data, printIdentifier);
       }
+
       ec[1]();
     });
+
     pending.delete(printIdentifier);
   }
 
