@@ -1,31 +1,42 @@
 'use strict';
 
-var istex = require('node-istex');
-// loading correspondence file ezpaarse rtype with istex rtype
-var data  = require('./istex-rtype.json');
-var cache = ezpaarse.lib('cache')('istex');
+const istex = require('node-istex').defaults({ extraQueryString: { sid: 'ezpaarse' }});
+const co    = require('co');
+const data  = require('./istex-rtype.json'); // matching between ezPAARSE and Istex types
+const cache = ezpaarse.lib('cache')('istex');
+
+const tiffCorpus = new Set(['EEBO', 'ECCO']);
 
 /**
  * Enrich ECs with istex data
  */
 module.exports = function () {
-  var self   = this;
-  var report = this.report;
+  const self         = this;
+  const report       = this.report;
+  const req          = this.request;
+  const activated    = /^true$/i.test(req.header('istex-enrich'));
+  const cacheEnabled = !/^false$/i.test(req.header('istex-cache'));
 
-  var activated = (this.request.header('istex-enrich') || '').toLowerCase() === 'true';
   if (!activated) { return function (ec, next) { next(); }; }
 
-  var ttl           = parseInt(this.request.header('istex-ttl')) || 3600 * 24 * 7;
-  var throttle      = parseInt(this.request.header('istex-throttle')) || 100;
-  var paquetSize    = parseInt(this.request.header('istex-paquet-size')) || 150;
+  self.logger.verbose('Istex cache: %s', cacheEnabled ? 'enabled' : 'disabled');
+
+  const ttl        = parseInt(req.header('istex-ttl')) || 3600 * 24 * 7;
+  const throttle   = parseInt(req.header('istex-throttle')) || 100;
+  const packetSize = parseInt(req.header('istex-paquet-size')) || 150;
   // Minimum number of ECs to keep before resolving them
-  var bufferSize    = parseInt(this.request.header('istex-buffer-size')) || 1000;
-  var busy          = false;
-  var buffer        = [];
-  var finalCallback = null;
+  let bufferSize   = parseInt(req.header('istex-buffer-size'));
+
+  if (isNaN(bufferSize)) {
+    bufferSize = 1000;
+  }
+
+  const buffer = [];
+  let busy = false;
+  let finalCallback = null;
 
   if (!cache) {
-    var err = new Error('failed to connect to mongodb, cache not available for istex');
+    const err = new Error('failed to connect to mongodb, cache not available for istex');
     err.status = 500;
     return err;
   }
@@ -33,179 +44,32 @@ module.exports = function () {
   report.set('general', 'istex-queries', 0);
   report.set('general', 'istex-fails', 0);
 
-  function getPacket(callback) {
-    var packet = [];
-
-    (function checkNextEC() {
-      if (packet.length >= paquetSize) { return callback(null, packet); }
-
-      var ec = buffer.shift();
-      if (!ec) { return callback(null, packet); }
-
-      if (!ec[0].unitid) {
-        ec[1]();
-        return checkNextEC();
+  return new Promise(function (resolve, reject) {
+    cache.checkIndexes(ttl, function (err) {
+      if (err) {
+        self.logger.error('istex: failed to ensure indexes' + err);
+        return reject(new Error('failed to ensure indexes for the cache of istex'));
       }
 
-      cache.get(ec[0].unitid, function (err, cachedDoc) {
-        if (cachedDoc) {
-          enrichEc(ec, cachedDoc);
-          ec[1]();
-        } else {
-          packet.push(ec);
-        }
-        checkNextEC();
-      });
-    })();
-  }
-
-  function drainBuffer(callback) {
-    if (buffer.length === 0) { return (finalCallback || callback)(); }
-    if (buffer.length < bufferSize && !finalCallback) { return callback(); }
-
-    getPacket(function (err, packet) {
-
-      if (packet.length === 0) {
-        self.logger.silly('Istex: no unitid in the paquet');
-        return setImmediate(function () { drainBuffer(callback); });
-      }
-
-      var unitids = packet.map(function (ec) { return ec[0].unitid; });
-
-      report.inc('general', 'istex-queries');
-      self.logger.verbose('Istex: resolving a paquet of %d ECs', packet.length);
-
-      istex.findlot(unitids, function (err, list) {
-
-        if (err || !Array.isArray(list)) {
-
-          if (err) { self.logger.error('Istex: the query failed', err); }
-          else     { self.logger.error('Istex: got an invalid response'); }
-
-          report.inc('general', 'istex-fails');
-
-          packet.forEach(function (ec) { ec[1](); });
-          return setTimeout(function() { drainBuffer(callback); }, throttle);
-        }
-
-        var notFound = [];
-        var results  = {};
-        list.forEach(item => { results[item.id] = item; });
-
-        packet.forEach(function (ec) {
-          var item = results[ec[0].unitid];
-
-          if (item) {
-            enrichEc(ec, item);
-          } else {
-            notFound.push(ec[0].unitid);
-          }
-
-          ec[1]();
-        });
-
-        function cacheNotFound() {
-          var unitid = notFound.pop();
-          if (!unitid) { return setTimeout(function() { drainBuffer(callback); }, throttle); }
-
-          cache.set(unitid, {}, function (err) {
-            if (err) { report.inc('general', 'istex-cache-fail'); }
-            cacheNotFound();
-          });
-        }
-
-        (function cacheResults() {
-          var item = list.pop();
-          if (!item) { return cacheNotFound(); }
-
-          cache.set(item.id, item, function (err) {
-            if (err) { report.inc('general', 'istex-cache-fail'); }
-            cacheResults();
-          });
-        })();
-      });
+      resolve(process);
     });
-  }
+  });
 
   /**
-   * Enrich ec with api istex and to cache the data in database
+   * enrich ec with cache or api istex
+   * @param  {object} ec the EC to process, null if no EC left
+   * @param  {Function} next the function to call when we are done with the given EC
    */
-  function enrichEc(ec, result) {
-
-    if (result.corpusName) {
-      ec[0]['publisher_name'] = result.corpusName;
-
-      if (['EEBO', 'ECCO'].indexOf(ec[0]['publisher_name'].toUpperCase()) >= 0) {
-        ec['mime'] = 'TIFF';
-      }
-    }
-
-    if (result.host) {
-      if (result.host.isbn) {
-        ec[0]['print_identifier'] = result.host.isbn[0];
-      }
-      if (result.host.issn) {
-        ec[0]['print_identifier'] = result.host.issn[0];
-      }
-      if (result.host.eisbn) {
-        ec[0]['online_identifier'] = result.host.eisbn[0];
-      }
-      if (result.host.eissn) {
-        ec[0]['online_identifier'] = result.host.eissn[0];
-      }
-      if (result.doi) {
-        ec[0].doi = result.doi[0];
-      }
-      if (result.host.title) {
-        ec[0]['publication_title'] = result.host.title;
-      }
-      if (result.host.subject && result.host.subject[0]) {
-        ec[0]['subject'] = result.host.subject[0].value;
-      }
-    }
-
-    if (result.publicationDate) {
-      ec[0]['publication_date'] = result.publicationDate;
-    } else {
-      ec[0]['publication_date'] = result.copyrightDate;
-    }
-
-    let genre = result.genre && result.genre[0];
-
-    if (genre) {
-      ec[0]['istex_genre'] = genre;
-    }
-
-    switch (ec[0]['istex_rtype']) {
-    case 'fulltext':
-      ec[0]['rtype'] = data[genre] || 'MISC';
-      break;
-    case 'metadata':
-      ec[0].rtype = 'METADATA';
-      break;
-    case 'enrichments':
-      ec[0].rtype = 'METADATA';
-      break;
-    default:
-      ec[0]['rtype'] = 'MISC';
-    }
-
-    if (result.language && result.language[0]) {
-      ec[0].language = result.language[0];
-    }
-  }
-  /**
- * enrich ec with cache or api istex
- * @param  {object} ec the EC to process, null if no EC left
- * @param  {Function} next the function to call when we are done with the given EC
- */
-  function enrich(ec, next) {
-    if (!ec || ec.platform !== 'istex') {
+  function process(ec, next) {
+    if (!ec) {
       finalCallback = next;
-      if (!busy) { drainBuffer(function () { next(); }); }
-      return ;
+      if (!busy) {
+        drainBuffer().catch(err => { this.job._stop(err); });
+      }
+      return;
     }
-    if (ec['user-agent'] && ec['user-agent'] === 'ezpaarse') {
+
+    if (ec['user-agent'] === 'ezpaarse') {
       return next(new Error('ec ezpaarse'));
     }
 
@@ -215,24 +79,226 @@ module.exports = function () {
       busy = true;
       self.saturate();
 
-      drainBuffer(function () {
+      drainBuffer().then(() => {
         busy = false;
         self.drain();
+      }).catch(err => {
+        this.job._stop(err);
       });
     }
   }
 
+  function getPacket() {
+    const packet = {
+      'ecs': [],
+      'ids': new Set()
+    };
 
-  return new Promise(function (resolve, reject) {
+    return co(function* () {
 
-    cache.checkIndexes(ttl, function (err) {
-      if (err) {
-        self.logger.error('istex: failed to ensure indexes' + err);
-        return reject(new Error('failed to ensure indexes for the cache of istex'));
+      while (packet.ids.size < packetSize) {
+        const [ec, done] = buffer.shift() || [];
+        if (!ec) { break; }
+
+        if (ec.platform !== 'istex' || !ec.unitid) {
+          done();
+          continue;
+        }
+
+        if (cacheEnabled) {
+          const cachedDoc = yield checkCache(ec.unitid);
+
+          if (cachedDoc) {
+            enrichEc(ec, cachedDoc);
+            done();
+            continue;
+          }
+        }
+
+        packet.ecs.push([ec, done]);
+        packet.ids.add(ec.unitid);
       }
 
-      resolve(enrich);
+      return packet;
     });
-  });
+  }
 
+  function checkCache(identifier) {
+    return new Promise((resolve, reject) => {
+      if (!identifier) { return resolve(); }
+
+      cache.get(identifier, (err, cachedDoc) => {
+        if (err) { return reject(err); }
+        resolve(cachedDoc);
+      });
+    });
+  }
+
+  function drainBuffer(callback) {
+    return co(function* () {
+
+      while (buffer.length >= bufferSize || (finalCallback && buffer.length > 0)) {
+
+        const packet = yield getPacket();
+
+        if (packet.ecs.length === 0 || packet.ids.size === 0) {
+          self.logger.silly('Istex: no IDs in the paquet');
+          yield new Promise(resolve => { setImmediate(resolve); });
+          continue;
+        }
+
+        const maxAttempts = 5;
+        const results = new Map();
+        let tries = 0;
+        let list;
+
+        while (!list) {
+          if (++tries > maxAttempts) {
+            const err = new Error(`Failed to query Istex ${maxAttempts} times in a row`);
+            return Promise.reject(err);
+          }
+
+          try {
+            list = yield queryIstex(Array.from(packet.ids));
+          } catch (e) {
+            self.logger.error('Istex: ', e.message);
+          }
+
+          yield wait();
+        }
+
+        for (const item of list) {
+          if (!item.id) { continue; }
+
+          results.set(item.id, item);
+
+          try {
+            yield cacheResult(item.id, item);
+          } catch (e) {
+            report.inc('general', 'istex-cache-fail');
+          }
+        }
+
+        for (const [ec, done] of packet.ecs) {
+
+          if (results.has(ec.unitid)) {
+            enrichEc(ec, results.get(ec.unitid));
+          } else {
+            try {
+              cacheResult(ec.unitid, {});
+            } catch (e) {
+              report.inc('general', 'istex-cache-fail');
+            }
+          }
+
+          done();
+        }
+      }
+    });
+  }
+
+  function wait() {
+    return new Promise(resolve => { setTimeout(resolve, throttle); });
+  }
+
+  function queryIstex(istexIds) {
+    report.inc('general', 'istex-queries');
+
+    return new Promise((resolve, reject) => {
+      istex.findByIstexIds(istexIds, (err, list) => {
+        if (err) {
+          report.inc('general', 'istex-fails');
+          return reject(err);
+        }
+
+        if (!Array.isArray(list)) {
+          report.inc('general', 'istex-fails');
+          return reject(new Error('invalid response'));
+        }
+
+        return resolve(list);
+      });
+    });
+  }
+
+  function cacheResult(id, item) {
+    return new Promise((resolve, reject) => {
+      if (!id || !item) { return resolve(); }
+
+      // The entire object can be pretty big
+      // We only cache what we need to limit memory usage
+      const cached = {
+        publicationDate: item.publicationDate,
+        copyrightDate:   item.copyrightDate,
+        corpusName:      item.corpusName,
+        language:        item.language,
+        genre:           item.genre,
+        host:            item.host,
+        doi:             item.doi
+      };
+
+      cache.set(id, cached, (err, result) => {
+        if (err) { return reject(err); }
+        resolve(result);
+      });
+    });
+  }
+
+  /**
+   * Enrich ec with api istex and to cache the data in database
+   */
+  function enrichEc(ec, result) {
+    const {
+      publicationDate,
+      copyrightDate,
+      corpusName,
+      language,
+      genre,
+      host,
+      doi
+    } = result;
+
+    if (corpusName) {
+      ec['publisher_name'] = corpusName;
+
+      if (tiffCorpus.has(corpusName.toUpperCase())) {
+        ec['mime'] = 'TIFF';
+      }
+    }
+
+    if (host) {
+      if (host.isbn)    { ec['print_identifier']  = getValue(host.isbn); }
+      if (host.issn)    { ec['print_identifier']  = getValue(host.issn); }
+      if (host.eisbn)   { ec['online_identifier'] = getValue(host.eisbn); }
+      if (host.eissn)   { ec['online_identifier'] = getValue(host.eissn); }
+      if (host.title)   { ec['publication_title'] = getValue(host.title); }
+      if (host.subject) { ec['subject']           = getValue(host.subject).value; }
+    }
+
+    ec['publication_date'] = publicationDate || copyrightDate;
+
+    if (doi)      { ec['doi']         = getValue(doi); }
+    if (genre)    { ec['istex_genre'] = getValue(genre); }
+    if (language) { ec['language']    = getValue(language); }
+
+    switch (ec['istex_rtype']) {
+    case 'fulltext':
+      ec['rtype'] = data[genre] || 'MISC';
+      break;
+    case 'metadata':
+    case 'enrichments':
+      ec['rtype'] = 'METADATA';
+      break;
+    default:
+      ec['rtype'] = 'MISC';
+    }
+  }
 };
+
+/**
+ * Returns the first element if the parameter is an array
+ * Otherwise returns the parameter as is
+ */
+function getValue(o) {
+  return Array.isArray(o) ? o[0] : o;
+}
