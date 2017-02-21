@@ -27,14 +27,14 @@ module.exports = function () {
 
   if (!activated) { return function (ec, next) { next(); }; }
 
-  var self     = this;
-  var report   = this.report;
-  var pending  = new Map();
-  var nbErrors = 0;
-  var buffer   = [];
-  var busy     = false;
+  var self    = this;
+  var report  = this.report;
+  var pending = new Map();
+  var buffer  = [];
+  var busy    = false;
 
   report.set('general', 'hal-queries', 0);
+  report.set('general', 'hal-fails', 0);
 
   if (!cache) {
     var err = new Error('failed to connect to mongodb, cache not available for HAL');
@@ -52,22 +52,34 @@ module.exports = function () {
       return self.drain();
     }
 
-    report.inc('general', 'hal-queries');
+    var maxAttempts = 5;
+    var tries = 0;
 
-    methal.findOne({ docid: ec.title_id }, { fields: fields }, function (err, doc) {
-      if (err) {
-        if (++nbErrors > 5) { activated = false; }
-        release(ec.title_id, null);
-        return setTimeout(pullBuffer, throttle);
+    (function queryHal() {
+      if (++tries > maxAttempts) {
+        const err = new Error(`Failed to query HAL ${maxAttempts} times in a row`);
+        return self.job._stop(err);
       }
 
-      cache.set(ec.title_id.toString(), doc, function (err) {
-        if (++nbErrors > 5) { activated = false; }
+      report.inc('general', 'hal-queries');
 
-        release(ec.title_id, doc || null);
-        setTimeout(pullBuffer, throttle);
+      methal.findOne({ docid: ec.title_id }, { fields }, function (err, doc) {
+        if (err) {
+          report.inc('general', 'hal-fails');
+          self.logger.error('HAL: ', err.message);
+          return queryHal();
+        }
+
+        cache.set(ec.title_id.toString(), doc || {}, function (err) {
+          if (err) {
+            report.inc('hal-cache-fail');
+          }
+
+          release(ec.title_id, doc || null);
+          setTimeout(pullBuffer, throttle);
+        });
       });
-    });
+    })();
   }
 
   /**
@@ -76,7 +88,7 @@ module.exports = function () {
    * @param  {Object} data     HAL data to enrich ECs, if any
    */
   function release(titleID, data) {
-    pending.get(titleID).forEach(function(ec) {
+    pending.get(titleID).forEach(function (ec) {
       if (data) {
         for (let p in data) {
           if (fieldsMap.hasOwnProperty(p)) { ec[0][fieldsMap[p]] = data[p]; }
@@ -91,7 +103,6 @@ module.exports = function () {
     if (!activated || !ec || !ec.title_id || ec.platform !== 'hal') {
       return next();
     }
-
     // If an EC with the same ID is being processed, add this one to pending
     if (pending.has(ec.title_id)) {
       return pending.get(ec.title_id).push([ec, next]);
