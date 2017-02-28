@@ -6,7 +6,6 @@ const rangeCheck = require('range_check');
 // TODO: hardcoded for now, to be externalized (maybe in the ezpaarse config.json)
 const privateRanges = ['10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16'];
 
-
 module.exports = function onCampusCounter() {
   const self = this;
   self.logger.verbose('Initializing onCampus counter');
@@ -24,6 +23,7 @@ module.exports = function onCampusCounter() {
     } else {
       ec['on_campus'] = 'N';
     }
+
     next();
-  }
+  };
 };
