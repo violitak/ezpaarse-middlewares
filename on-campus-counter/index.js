@@ -7,9 +7,8 @@ const rangeCheck = require('range_check');
 const privateRanges = ['10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16'];
 
 module.exports = function onCampusCounter() {
-  const self = this;
-  self.logger.verbose('Initializing onCampus counter');
-  self.report.set('general', 'on-campus-accesses', 0);
+  this.logger.verbose('Initializing onCampus counter');
+  this.report.set('general', 'on-campus-accesses', 0);
 
   return function process(ec, next) {
     if (!ec) { return next(); }
@@ -18,7 +17,7 @@ module.exports = function onCampusCounter() {
     // console.log(rangeCheck.inRange('192.168.1.1', ['10.0.0.0/8', '192.0.0.0/8']));
     // returns true
     if (rangeCheck.inRange(ec.host, privateRanges)) {
-      self.report.inc('general', 'on-campus-accesses');
+      this.report.inc('general', 'on-campus-accesses');
       ec['on_campus'] = 'Y';
     } else {
       ec['on_campus'] = 'N';
