@@ -1,73 +1,77 @@
-/*eslint global-require: 0*/
 'use strict';
-var path = require('path');
-
-var prefixexist = false;
-var prefixLogin = '';
-
-// test id file prefix login exist
-try {
-  prefixLogin = require(path.resolve(__dirname, '../..', ezpaarse.config.PREFIX_LOGIN));
-  prefixexist =  true;
-} catch (e) {
-  prefixexist =  false;
-}
 
 /**
- * cut fields login
+ * Extract data from a field
  */
 module.exports = function () {
-  var activated        = (this.request.header('cut') || '').toLowerCase() === 'true';
-  var cutField         = this.request.header('cut-field') || '';
-  var cutRegex         = this.request.header('cut-regex') || '';
-  var cutFieldsCreated = this.request.header('cut-create-fields') || '';
+  const header = this.request.header('extract');
 
-  if (!activated) { return function (ec, next) { next(); }; }
+  if (!header) { return (ec, next) => next(); }
 
-  var newFields = cutFieldsCreated.split(',');
+  const params = /^(.+?)=>(.+?)=>(.+?)$/.exec(header);
 
-  newFields.forEach(field => {
+  if (!params) {
+    const err = new Error('Invalid extract expression');
+    err.status = 400;
+    return err;
+  }
+
+  const sourceField = params[1].trim();
+  const destFields  = params[3].split(',').map(s => s.trim());
+  const expression  = toRegex(params[2].trim());
+
+  this.logger.verbose('Extracting %s into %s', sourceField, destFields);
+
+  destFields.forEach(field => {
     if (this.job.outputFields.added.indexOf(field) === -1) {
       this.job.outputFields.added.push(field);
     }
   });
 
-  // return function has a work to cut fields login and create new fields with result cutting
-  return function cut(ec, next) {
-    if (ec) {
-      // check if file prefix exist
-      if (ec.login) {
-        if (prefixexist) {
-          var prefix = '';
-          for (var i = 0; i< ec['login'].length; i++) {
-            prefix = prefix + ec['login'].substr(i, 1);
-            if (prefixLogin[prefix.toUpperCase()] === prefix) {
-              ec['OU'] = ec['login'].substr(i+1, ec['login'].length);
-              break;
-            }
-          }
-        }
-        // check if login is a mail regulèrie  expression
-        if (/([\w\W]+)@([\w\W]+)/.test(ec['login'])) {
-          ec['OU'] = ec['login'];
-        }
-      }
+  let match;
 
-      // cutting fields defined in header with a regex and put a value in new fields
-      if (cutField && cutRegex && newFields.length > 0) {
-        var regfields = new RegExp(cutRegex);
-        var match = '';
-        if (ec[cutField]) {
-          if ((match = regfields.exec(ec[cutField])) !== null) {
+  if (expression instanceof RegExp) {
+    this.logger.verbose('Extracting by applying a RegExp: %s', expression);
 
-            for (var j = 0; j < newFields.length; j++) {
-              ec[newFields[j]] = match[j + 1];
-            }
-          }
-        }
+    this.extract = function (source) {
+      match = expression.exec(source);
+      return match && match.slice(1);
+    };
+
+  } else if ((match = /^split\((.+)\)$/.exec(expression))) {
+    const splitExp = toRegex(match[1]);
+    this.logger.verbose('Extracting by splitting with: %s', splitExp);
+
+    this.extract = function (source) {
+      return source.split(splitExp);
+    };
+
+  } else {
+    const err = new Error('Invalid extract expression');
+    err.status = 400;
+    return err;
+  }
+
+  return function process(ec, next) {
+    if (!ec || !ec[sourceField]) { return next(); }
+
+    const extractedValues = this.extract(ec[sourceField]);
+
+    extractedValues.forEach((value, index) => {
+      if (destFields[index]) {
+        ec[destFields[index]] = value;
       }
-    }
+    });
 
     next();
   };
 };
+
+/**
+ * Cast str to RegExp if looking like a literal regex
+ * Otherwise return str
+ */
+function toRegex(str) {
+  const regParams = /^\/(.+)\/([gimy]*)$/.exec(str);
+  return regParams ? new RegExp(regParams[1], regParams[2]) : str;
+}
