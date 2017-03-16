@@ -272,7 +272,7 @@ module.exports = function () {
       if (host.eisbn)   { ec['online_identifier'] = getValue(host.eisbn); }
       if (host.eissn)   { ec['online_identifier'] = getValue(host.eissn); }
       if (host.title)   { ec['publication_title'] = getValue(host.title); }
-      if (host.subject) { ec['subject']           = getValue(host.subject).value; }
+      if (host.subject && host.subject.value) { ec['subject'] = getValue(host.subject).value; }
     }
 
     ec['publication_date'] = publicationDate || copyrightDate;
