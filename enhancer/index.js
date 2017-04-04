@@ -45,8 +45,10 @@ module.exports = function enhancer() {
     }
     if (ec.print_identifier) {
       query.$or.push({ 'content.json.print_identifier': ec.print_identifier });
+      query.$or.push({ 'content.json.online_identifier': ec.print_identifier });
     }
     if (ec.online_identifier) {
+      query.$or.push({ 'content.json.print_identifier': ec.online_identifier });
       query.$or.push({ 'content.json.online_identifier': ec.online_identifier });
     }
     if (ec.doi) {
