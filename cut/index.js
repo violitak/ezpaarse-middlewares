@@ -35,7 +35,7 @@ module.exports = function () {
 
     this.extract = function (source) {
       match = expression.exec(source);
-      return match && match.slice(1);
+      return (match && match.slice(1)) || [];
     };
 
   } else if ((match = /^split\((.+)\)$/.exec(expression))) {
