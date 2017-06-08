@@ -1,5 +1,7 @@
 {
   "globals": {
-    "ezpaarse": false
+    "ezpaarse": false,
+    "describe": false,
+    "it": false
   }
 }
