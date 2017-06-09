@@ -12,7 +12,11 @@ module.exports = function () {
   }
 
   return function process(ec, next) {
-    if (!ec || !ec['user-agent']) { return next(); }
+    if (!ec) { return next(); }
+    if (!ec['user-agent']) {
+      ec.ua = 'none';
+      return next();
+    }
 
     ec.ua = useragent.parse(ec['user-agent']).family;
 
