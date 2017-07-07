@@ -69,7 +69,7 @@ module.exports = function () {
       return;
     }
 
-    if (ec['user-agent'] === 'ezpaarse') {
+    if (ec['user-agent'] === 'ezpaarse' || ec.sid === 'ezpaarse') {
       return next(new Error('ec ezpaarse'));
     }
 
