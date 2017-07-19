@@ -286,7 +286,7 @@ module.exports = function () {
     report.inc('general', 'crossref-queries');
 
     return new Promise((resolve, reject) => {
-      crossref.works({ filter: { [property]: values } }, function (err, list) {
+      crossref.works({ filter: { [property]: values }, rows: packetSize }, function (err, list) {
         if (err) {
           report.inc('general', 'crossref-fails');
           return reject(err);
