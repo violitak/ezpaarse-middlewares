@@ -3,7 +3,7 @@
 const co         = require('co');
 const crossref   = require('crossref');
 const cache      = ezpaarse.lib('cache')('crossref');
-const doiPattern = /^10\.[0-9]{4,}\/[a-z0-9\-\._: ;\(\)\/]+$/i;
+const doiPattern = /^10\.[0-9]{4,}\/[a-z0-9\-._: ;()/]+$/i;
 
 /**
  * Enrich ECs with crossref data
@@ -314,7 +314,7 @@ module.exports = function () {
   }
 
   function aggregate(item, ec) {
-    if (item['type'] && /([a-z]+)\-([a-z]+)/.test(item['type'])) {
+    if (item['type'] && /([a-z]+)-([a-z]+)/.test(item['type'])) {
       ec['publication_title'] = ec['publication_title'] || item['container-title'];
     } else {
       ec['publication_title'] = ec['publication_title'] || item['title'];
@@ -330,7 +330,7 @@ module.exports = function () {
     ec['type'] = item['type'];
 
     if (item['ISSN']) {
-      const identifier = /([0-9A-Z\-]*)\,([0-9\-]+)/.exec(item['ISSN']);
+      const identifier = /([0-9A-Z-]*),([0-9-]+)/.exec(item['ISSN']);
       if (identifier && identifier[1]) {
         ec['print_identifier'] = ec['print_identifier'] || identifier[1];
         if (identifier[2]) {

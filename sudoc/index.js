@@ -3,7 +3,7 @@
 var cache = ezpaarse.lib('cache')('sudoc');
 var sudoc = require('sudoc');
 
-var issnPattern = /^[0-9]{4}\-[0-9xX]{4}$/i;
+var issnPattern = /^[0-9]{4}-[0-9xX]{4}$/i;
 var isbnPattern = /^(97(8|9))?\d{9}(\d|X)$/i;
 
 /**
