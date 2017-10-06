@@ -64,7 +64,11 @@ module.exports = function () {
     if (!ec) {
       finalCallback = next;
       if (!busy) {
-        drainBuffer().catch(err => { this.job._stop(err); });
+        drainBuffer().then(() => {
+          finalCallback();
+        }).catch(err => {
+          this.job._stop(err);
+        });
       }
       return;
     }
@@ -82,6 +86,8 @@ module.exports = function () {
       drainBuffer().then(() => {
         busy = false;
         self.drain();
+
+        if (finalCallback) { finalCallback(); }
       }).catch(err => {
         this.job._stop(err);
       });
