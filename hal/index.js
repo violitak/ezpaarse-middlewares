@@ -4,17 +4,18 @@ var cache  = ezpaarse.lib('cache')('hal');
 var methal = require('methal');
 
 var fieldsMap = {
-  'docid':              'title_id',
-  'bookTitle_s':        'publication_title',
-  'journalTitle_s':     'publication_title',
-  'journalUrl_s':       'title_url',
-  'publisher_s':        'publisher_name',
-  'journalPublisher_s': 'publisher_name',
-  'journalEissn_s':     'online_identifier',
-  'journalIssn_s':      'print_identifier',
-  'isbn_s':             'online_identifier',
-  'doiId_s':            'doi'
+  'docid':              'title_id'
+  /*, 'bookTitle_s':        'publication_title'
+  , 'journalTitle_s':     'publication_title'
+  , 'journalUrl_s':       'title_url'
+  , 'publisher_s':        'publisher_name'
+  , 'journalPublisher_s': 'publisher_name'
+  , 'journalEissn_s':     'online_identifier'
+  , 'journalIssn_s':      'print_identifier'
+  , 'isbn_s':             'online_identifier'
+  , 'doiId_s':            'doi'*/
 };
+
 var fields = Object.keys(fieldsMap);
 
 /**
@@ -63,7 +64,16 @@ module.exports = function () {
 
       report.inc('general', 'hal-queries');
 
-      methal.findOne({ docid: ec.title_id }, { fields }, function (err, doc) {
+      // Creating the request depending on the type of identifier found in the URL
+      var queryParams = {};
+
+      if (ec.idtype == 'DOCID') {
+        queryParams = {  docid: ec.title_id };
+      } else if (ec.idtype == 'IDENTIFIANT') {
+        queryParams = {  halId_s: ec.title_id };
+      }
+
+      methal.findOne(queryParams, { fields }, function (err, doc) {
         if (err) {
           report.inc('general', 'hal-fails');
           self.logger.error('HAL: ', err.message);
