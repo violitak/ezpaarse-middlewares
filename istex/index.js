@@ -174,14 +174,24 @@ module.exports = function () {
         }
 
         for (const item of list) {
-          if (!item.id) { continue; }
+          if (item.id) {
+            results.set(item.id, item);
 
-          results.set(item.id, item);
+            try {
+              yield cacheResult(item.id, item);
+            } catch (e) {
+              report.inc('general', 'istex-cache-fail');
+            }
+          }
 
-          try {
-            yield cacheResult(item.id, item);
-          } catch (e) {
-            report.inc('general', 'istex-cache-fail');
+          if (item.arkIstex) {
+            results.set(item.arkIstex, item);
+
+            try {
+              yield cacheResult(item.arkIstex, item);
+            } catch (e) {
+              report.inc('general', 'istex-cache-fail');
+            }
           }
         }
 
@@ -207,22 +217,40 @@ module.exports = function () {
     return new Promise(resolve => { setTimeout(resolve, throttle); });
   }
 
-  function queryIstex(istexIds) {
+  function queryIstex(ids) {
     report.inc('general', 'istex-queries');
 
+    const subQueries = [];
+    const istexIds   = [];
+    const arks       = [];
+
+    ids.forEach(id => {
+      /^ark:/i.test(id) ? arks.push(id) : istexIds.push(id);
+    });
+
+    if (istexIds.length > 0) {
+      subQueries.push(`id:(${istexIds.join(' OR ')})`);
+    }
+
+    if (arks.length > 0) {
+      subQueries.push(`arkIstex:("${arks.join('" OR "')}")`);
+    }
+
+    const query = `?size=200&output=*&q=${subQueries.join(' OR ')}`;
+
     return new Promise((resolve, reject) => {
-      istex.findByIstexIds(istexIds, (err, list) => {
+      istex.find(query, (err, result) => {
         if (err) {
           report.inc('general', 'istex-fails');
           return reject(err);
         }
 
-        if (!Array.isArray(list)) {
+        if (!Array.isArray(result && result.hits)) {
           report.inc('general', 'istex-fails');
           return reject(new Error('invalid response'));
         }
 
-        return resolve(list);
+        return resolve(result.hits);
       });
     });
   }
@@ -261,7 +289,8 @@ module.exports = function () {
       language,
       genre,
       host,
-      doi
+      doi,
+      arkIstex
     } = result;
 
     if (corpusName) {
@@ -284,6 +313,7 @@ module.exports = function () {
     ec['publication_date'] = publicationDate || copyrightDate;
 
     if (doi)      { ec['doi']         = getValue(doi); }
+    if (arkIstex) { ec['ark']         = getValue(arkIstex); }
     if (genre)    { ec['istex_genre'] = getValue(genre); }
     if (language) { ec['language']    = getValue(language); }
 
@@ -293,6 +323,7 @@ module.exports = function () {
       break;
     case 'metadata':
     case 'enrichments':
+    case 'record':
       ec['rtype'] = 'METADATA';
       break;
     default:
