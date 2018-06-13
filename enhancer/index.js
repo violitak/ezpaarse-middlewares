@@ -78,7 +78,7 @@ module.exports = function enhancer() {
       if (entry) {
         var info = entry.content.json;
         for (var prop in info) {
-          if (info[prop]) { ec[prop] = info[prop]; }
+          if (!ec[prop] && info[prop]) { ec[prop] = info[prop]; }
         }
         return release();
       }
