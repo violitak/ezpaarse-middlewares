@@ -280,14 +280,14 @@ module.exports = function () {
 
               let current_doc = results.get(ec.hal_identifiant)||results.get(ec.hal_docid);
               try {
-                  ec = yield getTruc(ec, current_doc);
+                  ec = yield loadEC(ec, current_doc);
               } catch (e) {
                   throw e;
                   return Promise.reject(e);
               }
 
           } else if (ec.hal_identifiant) {
-              // Dans le cas où on ne trouve pas l'identifiant dans l'index, on cherche la correspondance avec l'identifiant
+              // Dans le cas où on ne trouve pas l'identifiant dans l'index, on cherche une correspondance avec un identifiant fusionné
               let currentId = getCurrentId(ec.hal_identifiant);
               let newdoc;
 
@@ -302,9 +302,10 @@ module.exports = function () {
                   }
 
                   try {
-                      ec = yield getTruc(ec, newdoc);
+                      ec = yield loadEC(ec, newdoc);
                   } catch (e) {
                       throw e;
+                      self.logger.error('identifiant null non chargé');
                       return Promise.reject(e);
                   }
 
@@ -314,9 +315,10 @@ module.exports = function () {
           } else if (ec.docid) {
               // Dans le cas où on ne trouve pas le docid dans l'index, on ne sait pas à quel nouvel identifiant il peut être rattaché... c'est perdu !! Mais on le garde quand même dans la sortie
               try {
-                  ec = yield getTruc(ec, null);
+                  ec = yield loadEC(ec, null);
               } catch (e) {
                   throw e;
+                  self.logger.error('docid null non chargé');
                   return Promise.reject(e);
               }
           }
@@ -333,7 +335,7 @@ module.exports = function () {
     });
   }
 
-  function getTruc(ec, current_doc)
+  function loadEC(ec, current_doc)
   {
       return co(function* () {
 
