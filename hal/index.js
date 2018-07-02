@@ -116,13 +116,6 @@ module.exports = function () {
               ec.hal_docid = ec.hal_docid.toString();
           }
 
-          // Modification du formatage on_campus
-          if (ec.on_campus == 'N') {
-            ec.on_campus = false;
-          } else {
-            ec.on_campus = true;
-          }
-
           // Formatage de la collection
           if (ec.hal_collection) {
               ec.hal_collection = ec.hal_collection.toUpperCase();
@@ -288,18 +281,10 @@ module.exports = function () {
 
           } else if (ec.hal_identifiant) {
               // Dans le cas où on ne trouve pas l'identifiant dans l'index, on cherche une correspondance avec un identifiant fusionné
-              let currentId = getCurrentId(ec.hal_identifiant);
               let newdoc;
 
               try {
-                  newdoc = yield queryHal([currentId], []);
-                  if (newdoc && newdoc.length > 0) {
-                      newdoc = newdoc[0];
-
-                  } else {
-                      // Dans le cas où on ne trouve pas l'identifiant dans l'index, on ne sait pas à quel nouvel identifiant il peut être rattaché... c'est perdu !! Mais on le garde quand même dans la sortie
-                      newdoc = null;
-                  }
+                  newdoc = yield querySameHal(ec.hal_identifiant);
 
                   try {
                       ec = yield loadEC(ec, newdoc);
@@ -310,7 +295,13 @@ module.exports = function () {
                   }
 
               } catch (e) {
-                  self.logger.error('hal: ', e.message);
+                  try {
+                      ec = yield loadEC(ec, null);
+                  } catch (e) {
+                      throw e;
+                      self.logger.error('docid null non chargé');
+                      return Promise.reject(e);
+                  }
               }
           } else if (ec.docid) {
               // Dans le cas où on ne trouve pas le docid dans l'index, on ne sait pas à quel nouvel identifiant il peut être rattaché... c'est perdu !! Mais on le garde quand même dans la sortie
@@ -377,6 +368,7 @@ module.exports = function () {
           }
 
           // Cette action peut renvoyer une erreur
+          //@YS : il est là l'autre partie du copier/coller
           let sid_domain = yield getSite('PORTAIL', ec.domain, 'docid');
 
           if (ec.hal_collection) {
@@ -436,36 +428,21 @@ module.exports = function () {
     });
   }
 
-    /**
-     * Pour un document fusionné, il faut récupérer son identifiant actuel
-     * @param oldId
-     */
-    function getCurrentId(oldId) {
+    function querySameHal(identifiant) {
+        report.inc('general', 'hal-queries');
 
-        let sameas = [];
-        sameas["hal-01516446"] = "hal-01136517";
-        sameas["hal-00549150"] = "inserm-00663565";
-        sameas["hal-01566000"] = "hal-00828018";
-        sameas["hal-00672052"] = "hal-00843485";
-        sameas["tel-01493082"] = "tel-01542724";
-        sameas["hal-00543957"] = "hal-00480657";
-        sameas["lirmm-00736492"] = "hal-00706260";
-        return sameas[oldId];
-
-        /*report.inc('general', 'hal-queries');
-
-        let search = `toto_s:${oldId}`;
+        let search = `halIdSameAs_s:${identifiant})`;
 
         return new Promise((resolve, reject) => {
-            methal.findOne('hal-same', search, { fields: 'titi_s' }, (err, doc) => {
+                methal.findOne('hal', search, { fields: 'docid,halId_s,title_s,collId_i,sid_i,status_i'}, (err, doc) => {
                 if (err) {
                     report.inc('general', 'hal-fails');
                     return reject(err);
-            }
+                }
 
-            return resolve(doc);
+                return resolve(doc);
+            });
         });
-    });*/
     }
 
     function querySiteHal(type,site, return_param) {
@@ -515,14 +492,15 @@ module.exports = function () {
                 try {
                     let doc = yield querySiteHal(type, sitename, return_param);
                     if (!doc) {
-                        self.logger.error("Query site Hal failed for site "+sitename+" with error : "+e.message);
+                        self.logger.error("No site found for sitename "+sitename);
                         toreturn = 0;
+                        break;
                     } else {
                         toreturn = doc[return_param];
                     }
                 } catch (e) {
                     // La requête à l'API a planté mais on essaie maxAttempts fois avant de déclarer forfait
-                    self.logger.error("Query ref_site Hal failed : "+e.message);
+                    self.logger.error("Query ref_site Hal failed : "+e.message+" for sitename : "+sitename);
                 }
 
                 yield wait();
