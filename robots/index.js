@@ -85,20 +85,22 @@ module.exports = function () {
    * @param {Function} callback
    */
   function persist(callback) {
-    cache.collection.find({ counter: { $gt: threshold } }).toArray((err, docs) => {
-      if (err) {
-        self.logger.error('robots: failed to persist robots');
-        return callback();
-      }
-
-      report.set('general', 'robots-number', docs.length);
-
-      fs.writeFile(path.resolve(jobPath, 'robots.json'), JSON.stringify(docs, null, 2), err => {
+    cache.collection.find({ counter: { $gt: threshold } })
+      .project({ _id: 0, id: 1, counter: 1 })
+      .toArray((err, docs) => {
         if (err) {
           self.logger.error('robots: failed to persist robots');
+          return callback();
         }
-        return callback();
+
+        report.set('general', 'robots-number', docs.length);
+
+        fs.writeFile(path.resolve(jobPath, 'robots.json'), JSON.stringify(docs, null, 2), err => {
+          if (err) {
+            self.logger.error('robots: failed to persist robots');
+          }
+          return callback();
+        });
       });
-    });
   }
 };
