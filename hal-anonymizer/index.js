@@ -29,7 +29,7 @@ module.exports = function anonymizer() {
 
         return co(function* () {
 
-            if (ec.host) {
+            if (ec.host !== undefined && ec.host !== "") {
 
                 // Récupérer la valeur en cache si elle existe (cache valable 1 an)
                 let cachedCode = yield checkCache(ec.host);
@@ -42,6 +42,8 @@ module.exports = function anonymizer() {
                 }
 
                 ec['host'] = '';
+            } else {
+                ec['hal_anonymizer_track_code'] = crypto.createHmac('sha1', buffer).update(ec.host).digest('hex');
             }
 
         }).then(next).catch((err) => this.job._stop(err));
