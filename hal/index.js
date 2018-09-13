@@ -40,6 +40,8 @@ module.exports = function () {
   }
 
   report.set('general', 'hal-queries', 0);
+  report.set('general', 'site-queries', 0);
+  report.set('general', 'same-queries', 0);
   report.set('general', 'hal-fails', 0);
 
   return new Promise(function (resolve, reject) {
@@ -117,8 +119,13 @@ module.exports = function () {
           }
 
           // Formatage de la collection
-          if (ec.hal_collection) {
-              ec.hal_collection = ec.hal_collection.toUpperCase();
+          if (ec.hal_consult_collection) {
+              ec.hal_consult_collection = ec.hal_consult_collection.toUpperCase();
+          }
+
+          if (ec.User_Agent) {
+              ec.User_Agent.replace("^[\\\"]+", "");
+              ec.User_Agent.replace("[\\\"]+$", "");
           }
 
           // Formatage de la taille
@@ -152,30 +159,30 @@ module.exports = function () {
               try {
                   sid_domain = yield getSite('PORTAIL',ec.domain,'docid');
 
-                  if (ec.hal_collection) {
-                      ec.hal_sid_collection = yield getSite('COLLECTION', ec.hal_collection,'docid');
+                  if (ec.hal_consult_collection) {
+                      ec.hal_consult_collection_sid = yield getSite('COLLECTION', ec.hal_consult_collection,'docid');
                   }
 
                   if (ec.hal_redirection == true) {
-                      ec.hal_sid_stop_portail = cachedDocument.hal_sid;
-                      ec.hal_stop_portail = yield getSite('ID', cachedDocument.hal_sid,'url_s');
+                      ec.hal_endpoint_portail_sid = cachedDocument.hal_sid;
+                      ec.hal_endpoint_portail = yield getSite('ID', cachedDocument.hal_sid,'url_s');
                   }
               } catch (e) {
                   return Promise.reject(e);
               }
 
-              if (ec.hal_redirection == true && !ec.hal_collection && sid_domain == cachedDocument.hal_sid) {
+              if (ec.hal_redirection == true && !ec.hal_consult_collection && sid_domain == cachedDocument.hal_sid) {
                   // Il faut virer l'EC car c'est une redirection de portail à portail.
                   done(new Error());
                   continue;
               }
 
               if (ec.hal_redirection == true) {
-                  ec.hal_sid_start_portail = sid_domain;
-                  ec.hal_start_portail = ec.domain;
+                  ec.hal_redirect_portail_sid = sid_domain;
+                  ec.hal_redirect_portail = ec.domain;
               } else {
-                  ec.hal_sid_stop_portail = sid_domain;
-                  ec.hal_stop_portail = ec.domain;
+                  ec.hal_endpoint_portail_sid = sid_domain;
+                  ec.hal_endpoint_portail = ec.domain;
               }
 
               done();
@@ -341,6 +348,8 @@ module.exports = function () {
               ec.hal_identifiant = current_doc.halId_s;
               ec.publication_title = (current_doc.title_s || [''])[0];
               ec.hal_tampons = (current_doc.collId_i || []).join(',');
+              ec.hal_tampons_name = (current_doc.collCode_s || []).join(',');
+              ec.hal_domains = (current_doc.domain_s || []).join(',');
 
               sid_depot = current_doc.sid_i;
 
@@ -350,6 +359,8 @@ module.exports = function () {
               cache_doc.hal_identifiant = ec.hal_identifiant;
               cache_doc.publication_title = ec.publication_title;
               cache_doc.hal_tampons = ec.hal_tampons;
+              cache_doc.hal_tampons_name = ec.hal_tampons_name;
+              cache_doc.hal_domains = ec.hal_domains;
               cache_doc.hal_sid = sid_depot;
           }
 
@@ -371,25 +382,25 @@ module.exports = function () {
           //@YS : il est là l'autre partie du copier/coller
           let sid_domain = yield getSite('PORTAIL', ec.domain, 'docid');
 
-          if (ec.hal_collection) {
-              ec.hal_sid_collection = yield getSite('COLLECTION', ec.hal_collection, 'docid');
+          if (ec.hal_consult_collection) {
+              ec.hal_consult_collection_sid = yield getSite('COLLECTION', ec.hal_consult_collection, 'docid');
           }
 
           if (ec.hal_redirection == true && sid_depot) {
-              ec.hal_stop_portail = yield getSite('ID', sid_depot, 'url_s');
-              ec.hal_sid_stop_portail = sid_depot;
+              ec.hal_endpoint_portail = yield getSite('ID', sid_depot, 'url_s');
+              ec.hal_endpoint_portail_sid = sid_depot;
           }
 
-          if (ec.hal_redirection == true && !ec.hal_collection && sid_domain == sid_depot) {
+          if (ec.hal_redirection == true && !ec.hal_consult_collection && sid_domain == sid_depot) {
               return null;
           }
 
           if (ec.hal_redirection == true) {
-              ec.hal_sid_start_portail = sid_domain;
-              ec.hal_start_portail = ec.domain;
+              ec.hal_redirect_portail_sid = sid_domain;
+              ec.hal_redirect_portail = ec.domain;
           } else {
-              ec.hal_sid_stop_portail = sid_domain;
-              ec.hal_stop_portail = ec.domain;
+              ec.hal_endpoint_portail_sid = sid_domain;
+              ec.hal_endpoint_portail = ec.domain;
           }
 
           return ec;
@@ -412,7 +423,7 @@ module.exports = function () {
     return new Promise((resolve, reject) => {
         // Attention, le paramètre rows defini le nombre de retours. Pour 1 identifiant, on peut avoir plusieurs docids. On ne peut donc pas définir rows à packetSize. Pour viser large, on multiple par 2
         // Si jamais on a plus de 2 versions de chaque document, c'est la limite. Mais c'est peu probable que ça arrive.
-      methal.find('hal', search, { fields: 'docid,halId_s,title_s,collId_i,sid_i,status_i', rows:packetSize*2}, (err, docs) => {
+      methal.find('hal', search, { fields: 'docid,halId_s,title_s,collId_i,collCode_s,domain_s,sid_i,status_i', rows:packetSize*2}, (err, docs) => {
         if (err) {
           report.inc('general', 'hal-fails');
           return reject(err);
@@ -429,12 +440,12 @@ module.exports = function () {
   }
 
     function querySameHal(identifiant) {
-        report.inc('general', 'hal-queries');
+        report.inc('general', 'same-queries');
 
         let search = `halIdSameAs_s:${identifiant})`;
 
         return new Promise((resolve, reject) => {
-                methal.findOne('hal', search, { fields: 'docid,halId_s,title_s,collId_i,sid_i,status_i'}, (err, doc) => {
+                methal.findOne('hal', search, { fields: 'docid,halId_s,title_s,collId_i,collCode_s,domain_s,sid_i,status_i'}, (err, doc) => {
                 if (err) {
                     report.inc('general', 'hal-fails');
                     return reject(err);
@@ -446,7 +457,7 @@ module.exports = function () {
     }
 
     function querySiteHal(type,site, return_param) {
-        report.inc('general', 'hal-queries');
+        report.inc('general', 'site-queries');
 
         let search;
 
