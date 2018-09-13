@@ -126,6 +126,7 @@ module.exports = function () {
           if (ec.User_Agent) {
               ec.User_Agent.replace("^[\\\"]+", "");
               ec.User_Agent.replace("[\\\"]+$", "");
+              ec.User_Agent.replace("/^(\\|\")+/", "");
           }
 
           // Formatage de la taille
