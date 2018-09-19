@@ -3,7 +3,7 @@
 var crypto = require('crypto');
 const co    = require('co');
 
-const cache = ezpaarse.lib('cache')('hal-anonymizer');
+const cache = ezpaarse.lib('cache')('trackcode-generator');
 // On conserve le cache pendant 1 an glissant
 const ttl        = 3600 * 24 * 365;
 
@@ -11,10 +11,10 @@ const ttl        = 3600 * 24 * 365;
  * Anonymize a list of fields
  */
 module.exports = function anonymizer() {
-  this.logger.verbose('Initializing Hal anonymization');
+  this.logger.verbose('Initializing Trackcode Generator');
 
     if (!cache) {
-        const err = new Error('failed to connect to mongodb, cache not available for hal anonymization');
+        const err = new Error('failed to connect to mongodb, cache not available for trackcode generator');
         err.status = 500;
         return err;
     }
@@ -34,16 +34,16 @@ module.exports = function anonymizer() {
                 // Récupérer la valeur en cache si elle existe (cache valable 1 an)
                 let cachedCode = yield checkCache(ec.host);
                 if (cachedCode) {
-                    ec['hal_anonymizer_track_code'] = cachedCode;
+                    ec['trackcode'] = cachedCode;
                 } else {
-                    ec['hal_anonymizer_track_code'] = crypto.createHmac('sha1', buffer).update(ec.host).digest('hex');
+                    ec['trackcode'] = crypto.createHmac('sha1', buffer).update(ec.host).digest('hex');
 
-                    yield cacheResult(ec.host, ec.hal_anonymizer_track_code);
+                    yield cacheResult(ec.host, ec.trackcode);
                 }
 
                 ec['host'] = '';
             } else {
-                ec['hal_anonymizer_track_code'] = crypto.createHmac('sha1', buffer).update(ec.host).digest('hex');
+                ec['trackcode'] = crypto.createHmac('sha1', buffer).update(ec.host).digest('hex');
             }
 
         }).then(next).catch((err) => this.job._stop(err));
@@ -52,8 +52,8 @@ module.exports = function anonymizer() {
     return new Promise(function (resolve, reject) {
         cache.checkIndexes(ttl, function (err) {
             if (err) {
-                self.logger.error('hal: failed to ensure indexes' + err);
-                return reject(new Error('failed to ensure indexes for the cache of hal'));
+                self.logger.error('trackcode generator: failed to ensure indexes' + err);
+                return reject(new Error('failed to ensure indexes for the cache of trackcode generator'));
             }
 
             crypto.randomBytes(40, function (err, res_buffer) {
