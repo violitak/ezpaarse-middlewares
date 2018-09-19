@@ -123,12 +123,6 @@ module.exports = function () {
               ec.hal_consult_collection = ec.hal_consult_collection.toUpperCase();
           }
 
-          if (ec.User_Agent) {
-              ec.User_Agent.replace("^[\\\"]+", "");
-              ec.User_Agent.replace("[\\\"]+$", "");
-              ec.User_Agent.replace("/^(\\|\")+/", "");
-          }
-
           // Formatage de la taille
           if (!ec.size) {
             ec.size = 0;
