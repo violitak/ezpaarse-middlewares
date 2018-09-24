@@ -1,4 +1,5 @@
 /* eslint max-len: 0 */
+'use strict';
 
 const { contextify } = require('../mock');
 const mw = require('.');

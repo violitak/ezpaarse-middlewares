@@ -1,3 +1,5 @@
+'use strict';
+
 exports.contextify = function (middleware) {
   const ctx = {
     request: {
