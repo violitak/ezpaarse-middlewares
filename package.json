@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "description": "middlewares for ezPAARSE",
   "scripts": {
-    "test": "mocha **/*spec.js"
+    "test": "mocha **/*spec.js",
+    "lint": "eslint --ext .js --ignore-path .gitignore ."
   },
   "homepage": "https://github.com/ezpaarse-project/ezpaarse-middlewares#readme",
   "repository": {
@@ -15,6 +16,7 @@
   },
   "devDependencies": {
     "chai": "^4.0.2",
-    "mocha": "^3.4.2"
+    "mocha": "^3.4.2",
+    "eslint": "^5.6.0"
   }
 }
