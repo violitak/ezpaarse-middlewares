@@ -1,7 +1,11 @@
 {
+  "env": {
+    "node": true
+  },
   "globals": {
     "ezpaarse": false,
     "describe": false,
-    "it": false
+    "it": false,
+    "before": false
   }
 }
