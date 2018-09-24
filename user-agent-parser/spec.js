@@ -1,8 +1,8 @@
 /* eslint max-len: 0 */
-'use strict';
 
+const { contextify } = require('../mock');
 const mw = require('.');
-const process = mw();
+const process = contextify(mw);
 const { expect } = require('chai');
 
 const common = [
