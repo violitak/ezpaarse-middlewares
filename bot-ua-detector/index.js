@@ -72,7 +72,7 @@ let lastRefresh = Date.now();
  */
 function getRemoteList({ timeout, logger }) {
   return new Promise((resolve, reject) => {
-    if (remoteList && ((Date.now() - lastRefresh) < oneDay)) { return remoteList; }
+    if (remoteList && ((Date.now() - lastRefresh) < oneDay)) { return resolve(remoteList); }
 
     logger.info('Refreshing robots list');
 
