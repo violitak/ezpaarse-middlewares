@@ -411,10 +411,11 @@ module.exports = function () {
        */
       const opts = {
         fields: 'docid,halId_s,title_s,collId_i,collCode_s,domain_s,sid_i,status_i',
-        rows: packetSize * 2
+        rows: packetSize * 2,
+        core: 'hal'
       };
 
-      methal.find('hal', search, opts, (err, docs) => {
+      methal.find(search, opts, (err, docs) => {
         if (err) {
           report.inc('general', 'hal-fails');
           return reject(err);
@@ -436,9 +437,12 @@ module.exports = function () {
     let search = `halIdSameAs_s:${identifiant})`;
 
     return new Promise((resolve, reject) => {
-      const opts = { fields: 'docid,halId_s,title_s,collId_i,collCode_s,domain_s,sid_i,status_i' };
+      const opts = {
+        core: 'hal',
+        fields: 'docid,halId_s,title_s,collId_i,collCode_s,domain_s,sid_i,status_i'
+      };
 
-      methal.findOne('hal', search, opts, (err, doc) => {
+      methal.findOne(search, opts, (err, doc) => {
         if (err) {
           report.inc('general', 'hal-fails');
           return reject(err);
@@ -463,7 +467,7 @@ module.exports = function () {
     }
 
     return new Promise((resolve, reject) => {
-      methal.findOne('ref_site', search, { fields: returnParam}, (err, doc) => {
+      methal.findOne(search, { fields: returnParam, core: 'ref_site' }, (err, doc) => {
         if (err) {
           report.inc('general', 'hal-fails');
           return reject(err);
