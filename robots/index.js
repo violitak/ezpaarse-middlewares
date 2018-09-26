@@ -45,7 +45,7 @@ module.exports = function () {
       });
     }
 
-    const trackCode = ec['hal_anonymizer_track_code'];
+    const trackCode = ec['trackcode'];
     if (!trackCode) { return next(); }
 
     increment(trackCode, true, next);
