@@ -1,8 +1,19 @@
 'use strict';
 
-const methal = require('methal');
 const co     = require('co');
 const cache  = ezpaarse.lib('cache')('hal');
+let methal;
+
+/**
+ * Workaround to prevent processes to fail because this middleware is included by default
+ * but the methal module has been renamed
+ */
+try {
+  // eslint-disable-next-line global-require
+  methal = require('@ezpaarse-project/methal');
+} catch (e) {
+  methal = null;
+}
 
 /**
 * Enrich ECs with hal data
@@ -11,7 +22,7 @@ module.exports = function () {
   const self         = this;
   const report       = this.report;
   const req          = this.request;
-  const activated    = /^true$/i.test(req.header('hal-enrich'));
+  const activated    = (methal !== null) && /^true$/i.test(req.header('hal-enrich'));
   const cacheEnabled = !/^false$/i.test(req.header('hal-cache'));
 
   if (!activated) { return function (ec, next) { next(); }; }
