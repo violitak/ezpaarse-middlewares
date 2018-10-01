@@ -46,7 +46,7 @@ const browsers = [
 ];
 
 let process;
-describe('user-agent-parser', () => {
+describe('bot-ua-detector', () => {
   before(() => contextify(mw).then(cb => { process = cb; }));
 
   it('should detect common bots', () => {
