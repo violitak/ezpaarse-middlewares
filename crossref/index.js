@@ -234,7 +234,7 @@ module.exports = function () {
               aggregate(results.get(pii), ec);
             } else {
               try {
-                cacheResult(pii, {});
+                yield cacheResult(pii, {});
               } catch (e) {
                 report.inc('general', 'crossref-cache-fail');
               }
@@ -248,7 +248,7 @@ module.exports = function () {
               aggregate(results.get(doi), ec);
             } else {
               try {
-                cacheResult(doi, {});
+                yield cacheResult(doi, {});
               } catch (e) {
                 report.inc('general', 'crossref-cache-fail');
               }
