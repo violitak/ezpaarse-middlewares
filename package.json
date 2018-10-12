@@ -20,7 +20,13 @@
     "mocha": "^5.2.0"
   },
   "dependencies": {
+    "@ezpaarse-project/methal": "^2.1.0",
+    "co": "^4.6.0",
+    "crossref": "^1.2.1",
+    "node-istex": "^1.2.1",
+    "range_check": "^1.4.0",
     "request": "^2.88.0",
+    "sudoc": "^1.0.4",
     "useragent": "^2.3.0"
   }
 }
