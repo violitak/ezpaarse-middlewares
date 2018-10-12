@@ -158,6 +158,7 @@ module.exports = function () {
             sidDomain = yield getSite('PORTAIL', ec.domain, 'docid');
 
             if (ec.hal_consult_collection) {
+              // eslint-disable-next-line max-len
               ec['hal_consult_collection_sid'] = yield getSite('COLLECTION', ec.hal_consult_collection, 'docid');
             }
 
@@ -169,6 +170,7 @@ module.exports = function () {
             return Promise.reject(e);
           }
 
+          // eslint-disable-next-line max-len
           if (ec.hal_redirection === true && !ec.hal_consult_collection && sidDomain == cachedDocument.hal_sid) {
             // Il faut virer l'EC car c'est une redirection de portail à portail.
             done(new Error());
@@ -190,10 +192,10 @@ module.exports = function () {
         packet.ecs.push([ec, done]);
 
         if (ec.hal_identifiant) {
-          // ON créé un paquet d'identifiants
+          // On crée un paquet d'identifiants
           packet.identifiants.add(ec.hal_identifiant);
         } else if (ec.hal_docid) {
-          // ON créé un paquet de docids
+          // On crée un paquet de docids
           packet.docids.add(ec.hal_docid);
         }
       }
@@ -376,6 +378,7 @@ module.exports = function () {
       let sidDomain = yield getSite('PORTAIL', ec.domain, 'docid');
 
       if (ec.hal_consult_collection) {
+        // eslint-disable-next-line max-len
         ec['hal_consult_collection_sid'] = yield getSite('COLLECTION', ec.hal_consult_collection, 'docid');
       }
 
