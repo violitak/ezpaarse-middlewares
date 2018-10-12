@@ -1,49 +1,67 @@
 /* eslint global-require: 0 */
 'use strict';
 
-var parserlist = ezpaarse.lib('parserlist');
+const parserlist = ezpaarse.lib('parserlist');
 
 /**
  * Parse the URL
  */
 module.exports = function () {
 
-  var job = this.job;
+  const job = this.job;
+
+  if (job.forceECFieldPublisher) {
+    this.logger.verbose(`Forced publisher name : ${job.forceECFieldPublisher}`);
+  }
 
   return function filter(ec, next) {
     if (!ec) { return next(); }
 
-    var parser = parserlist.get(ec.domain);
+    let parsers = parserlist.get(ec.domain);
 
-    if (!parser && job.forceParser) {
-      // forceParser contains platform name parser to use
-      parser = parserlist.getFromPlatform(job.forceParser);
-      this.logger.silly('Parser found for platform ', job.forceParser);
+    if (!parsers) {
+      parsers = [];
+    } else if (!Array.isArray(parsers)) {
+      parsers = [parsers];
     }
 
-    if (!parser) {
-      this.logger.silly('Parser not found for domain ', ec.domain);
+    if (parsers.length === 0 && job.forceParser) {
+      // forceParser contains platform name parser to use
+      parsers.push(parserlist.getFromPlatform(job.forceParser));
+      this.logger.silly(`Parser found for platform ${job.forceParser}`);
+    }
 
-      var err  = new Error('Parser not found');
+    if (parsers.length === 0) {
+      this.logger.silly(`Parser not found for domain ${ec.domain}`);
+
+      const err  = new Error('Parser not found');
       err.type = 'ENOPARSER';
       return next(err);
     }
 
-    this.logger.silly('job.forceECFieldPublisher ', job.forceECFieldPublisher);
+    for (const parser of parsers) {
+      const result = require(parser.file).execute(ec);
 
-    ec['platform']       = parser.platform;
-    ec['platform_name']  = parser.platformName;
-    ec['publisher_name'] = job.forceECFieldPublisher || parser.publisherName;
+      if (result && Object.keys(result).length > 0) {
+        ec['platform']       = parser.platform;
+        ec['platform_name']  = parser.platformName;
+        ec['publisher_name'] = job.forceECFieldPublisher || parser.publisherName;
 
-    var result = require(parser.file).execute(ec) || {};
+        if (result.hasOwnProperty('_granted')) {
+          ec._meta.granted = result._granted;
+          delete result._granted;
+        }
 
-    if (result.hasOwnProperty('_granted')) {
-      ec._meta.granted = result._granted;
-      delete result._granted;
+        for (const p in result) {
+          ec[p] = result[p];
+        }
+
+        return next();
+      }
     }
 
-    for (var p in result) { ec[p] = result[p]; }
-
-    next();
+    const err = new Error('EC not qualified');
+    err.type = 'ENOTQUALIFIED';
+    next(err);
   };
 };
