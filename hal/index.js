@@ -347,7 +347,7 @@ module.exports = function () {
         }
       }
 
-      const redirected = addSiteData(ec, sidDepot);
+      const redirected = yield addSiteData(ec, sidDepot);
 
       return redirected ? null : ec;
     });
