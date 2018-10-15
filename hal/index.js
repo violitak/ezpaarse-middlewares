@@ -1,7 +1,7 @@
 'use strict';
 
-const co     = require('co');
-const cache  = ezpaarse.lib('cache')('hal');
+const co = require('co');
+const cache = ezpaarse.lib('cache')('hal');
 let methal;
 
 /**
@@ -142,7 +142,7 @@ module.exports = function () {
           continue;
         }
 
-        let cachedDocument = yield checkCache(ec.hal_identifiant||ec.hal_docid);
+        let cachedDocument = yield checkCache(ec.hal_identifiant || ec.hal_docid);
 
         if (cachedDocument && cachedDocument.hal_docid) {
           // récupération des données en cache. Attention, elle doivent bien
@@ -151,38 +151,13 @@ module.exports = function () {
             ec[prop] = cachedDocument[prop];
           }
 
-          // @YS : il faudrait partager ce code copié/collé.
-          // J'ai peur de faire des conneries avec toutes le histoires de yield/co/etc... !
-          let sidDomain;
-          try {
-            sidDomain = yield getSite('PORTAIL', ec.domain, 'docid');
+          const redirected = yield addSiteData(ec, cachedDocument.hal_sid);
 
-            if (ec.hal_consult_collection) {
-              // eslint-disable-next-line max-len
-              ec['hal_consult_collection_sid'] = yield getSite('COLLECTION', ec.hal_consult_collection, 'docid');
-            }
-
-            if (ec.hal_redirection === true) {
-              ec['hal_endpoint_portail_sid'] = cachedDocument.hal_sid;
-              ec['hal_endpoint_portail'] = yield getSite('ID', cachedDocument.hal_sid, 'url_s');
-            }
-          } catch (e) {
-            return Promise.reject(e);
-          }
-
-          // eslint-disable-next-line max-len
-          if (ec.hal_redirection === true && !ec.hal_consult_collection && sidDomain == cachedDocument.hal_sid) {
-            // Il faut virer l'EC car c'est une redirection de portail à portail.
-            done(new Error());
+          if (redirected) {
+            const err = new Error('portal to portal redirection');
+            err.type = 'EIRRELEVANT';
+            done(err);
             continue;
-          }
-
-          if (ec.hal_redirection === true) {
-            ec['hal_redirect_portail_sid'] = sidDomain;
-            ec['hal_redirect_portail'] = ec.domain;
-          } else {
-            ec['hal_endpoint_portail_sid'] = sidDomain;
-            ec['hal_endpoint_portail'] = ec.domain;
           }
 
           done();
@@ -240,7 +215,6 @@ module.exports = function () {
 
           try {
             docs = yield queryHal(Array.from(packet.identifiants), Array.from(packet.docids));
-
           } catch (e) {
             self.logger.error(`hal: ${e.message}`);
           }
@@ -373,22 +347,40 @@ module.exports = function () {
         }
       }
 
-      // Cette action peut renvoyer une erreur
-      // @YS : il est là l'autre partie du copier/coller
-      let sidDomain = yield getSite('PORTAIL', ec.domain, 'docid');
+      const redirected = addSiteData(ec, sidDepot);
+
+      return redirected ? null : ec;
+    });
+  }
+
+  function wait() {
+    return new Promise(resolve => { setTimeout(resolve, throttle); });
+  }
+
+  /**
+   * Add site data to the EC
+   * @param {Object} ec the EC to enrich
+   * @param {String} sidDepot the site ID
+   * @return {Boolean} redirected wether the EC is a redirection or not
+   */
+  function addSiteData(ec, sidDepot) {
+    return co(function* () {
+      if (!sidDepot) { return false; }
+
+      const sidDomain = yield getSite('PORTAIL', ec.domain, 'docid');
 
       if (ec.hal_consult_collection) {
         // eslint-disable-next-line max-len
         ec['hal_consult_collection_sid'] = yield getSite('COLLECTION', ec.hal_consult_collection, 'docid');
       }
 
-      if (ec.hal_redirection === true && sidDepot) {
-        ec['hal_endpoint_portail'] = yield getSite('ID', sidDepot, 'url_s');
+      if (ec.hal_redirection === true) {
         ec['hal_endpoint_portail_sid'] = sidDepot;
+        ec['hal_endpoint_portail'] = yield getSite('ID', sidDepot, 'url_s');
       }
 
       if (ec.hal_redirection === true && !ec.hal_consult_collection && sidDomain == sidDepot) {
-        return null;
+        return true;
       }
 
       if (ec.hal_redirection === true) {
@@ -399,12 +391,8 @@ module.exports = function () {
         ec['hal_endpoint_portail'] = ec.domain;
       }
 
-      return ec;
+      return false;
     });
-  }
-
-  function wait() {
-    return new Promise(resolve => { setTimeout(resolve, throttle); });
   }
 
   function queryHal(identifiants, docids) {
@@ -486,7 +474,6 @@ module.exports = function () {
           report.inc('general', 'hal-fails');
           return reject(err);
         }
-
 
         return resolve(doc);
       });
