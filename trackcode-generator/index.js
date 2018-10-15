@@ -53,7 +53,7 @@ module.exports = function anonymizer() {
   return new Promise((resolve, reject) => {
     cache.checkIndexes(ttl, function (err) {
       if (err) {
-        this.logger.error('trackcode generator: failed to ensure indexes' + err);
+        this.logger.error(`trackcode generator: failed to ensure indexes - ${err}`);
         return reject(new Error('failed to ensure indexes for the cache of trackcode generator'));
       }
 
