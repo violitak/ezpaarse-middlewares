@@ -1,23 +1,19 @@
 'use strict';
 
-var mongo = ezpaarse.lib('mongo');
+const mongo = ezpaarse.lib('mongo');
 
 /**
  * Create an EC enhancer
  */
 module.exports = function enhancer() {
-  var noEnrich = (this.request.header('ezpaarse-enrich') || '').toLowerCase() == 'false';
+  const noEnrich = (this.request.header('ezpaarse-enrich') || '').toLowerCase() === 'false';
 
   if (noEnrich) { return function (ec, next) { next(); }; }
 
-  // 0 => PKB available, or currently checking that it's available
-  // 1 => PKB not available
-  var report      = this.report;
-  var notifier    = this.job.notifiers['missing-title-ids'];
-  var pkbs        = mongo.db ? mongo.db.collection('pkbs') : null;
-  var pending     = new Set();
-  var missingPKBs = new Map();
-  var finalCallback;
+  const report  = this.report;
+  const pkbs    = mongo.db ? mongo.db.collection('pkbs') : null;
+  const pending = new Set();
+  let finalCallback;
 
   return function enhance(ec, next) {
     if (!ec) {
@@ -25,16 +21,12 @@ module.exports = function enhancer() {
       return finalCallback = next;
     }
 
-    if (missingPKBs.get(ec.platform)) {
-      return next();
-    }
-
     if (!pkbs) {
       report.inc('general', 'enhancement-errors');
       return next();
     }
 
-    var query = {
+    const query = {
       '_platform': ec.platform,
       '$or': [],
       'state': { $ne: 'deleted' }
@@ -66,38 +58,20 @@ module.exports = function enhancer() {
       if (pending.size === 0 && finalCallback) { finalCallback(); }
     }
 
-    pkbs.findOne(query, {
-      'content': 1
-    }, function (err, entry) {
+    pkbs.findOne(query, { 'content': 1 }, function (err, entry) {
       if (err) {
         report.inc('general', 'enhancement-errors');
         return release();
       }
 
-      notifier.incrementQueries(ec.platform);
       if (entry) {
-        var info = entry.content.json;
-        for (var prop in info) {
+        const info = entry.content.json;
+        for (const prop in info) {
           if (!ec[prop] && info[prop]) { ec[prop] = info[prop]; }
         }
-        return release();
       }
 
-      notifier.incrementMisses(ec.platform, ec.title_id);
-      ec._meta.enhancementFailed = true;
-
-      if (missingPKBs.has(ec.platform)) { return release(); }
-
-      missingPKBs.set(ec.platform, 0);
-
-      pkbs.findOne({ '_platform': ec.platform }, { _id: 1 }, function (err, entry) {
-        if (err) { return release(); }
-        missingPKBs.get(ec.platform, entry ? 0 : 1);
-
-        if (!entry) { notifier.noPkbFor(ec.platform); }
-
-        release();
-      });
+      release();
     });
   };
 };
