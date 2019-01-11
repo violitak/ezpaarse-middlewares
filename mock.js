@@ -1,14 +1,16 @@
 'use strict';
 
-exports.contextify = function (middleware) {
-  const ctx = {
+exports.contextify = function (middleware, contextModifier) {
+  let ctx = {
     request: {
-      header () {}
+      headers: {},
+      header (name) { return ctx.request.headers[name.toLowerCase()]; }
     },
     response: {
       header () {}
     },
     logger: {
+      silly () {},
       info () {},
       verbose () {},
       warn () {},
@@ -22,8 +24,19 @@ exports.contextify = function (middleware) {
       filters: {
         robots: false
       }
-    }
+    },
+    report: {
+      set() {},
+      get() {},
+      inc() {},
+    },
+    saturate () {},
+    drain () {},
   };
+
+  if (typeof contextModifier === 'function') {
+    contextModifier(ctx);
+  }
 
   return middleware.call(ctx);
 };
