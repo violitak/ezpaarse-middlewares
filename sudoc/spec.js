@@ -4,7 +4,9 @@ const { contextify } = require('../mock');
 const mw = require('.');
 const { expect } = require('chai');
 
-describe('sudoc', () => {
+describe('sudoc', function () {
+  this.timeout(5000);
+
   it('should correctly convert ISSN to PPN', async () => {
     const process = await contextify(mw, ctx => {
       ctx.request.headers['sudoc-enrich'] = 'true';
