@@ -156,8 +156,7 @@ module.exports = function () {
       const uri = 'http://core.openedition.org/';
       const qs = {
         action: 'get',
-        format: 'json',
-        url: `http://journals.openedition.org/${sitename}/${lodelid}`
+        format: 'json'
       };
 
       qs.url = '(';
