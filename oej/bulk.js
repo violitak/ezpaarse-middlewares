@@ -110,8 +110,8 @@ module.exports = function () {
     }
 
     // Index results by ID for faster searching
-    for (const item of list.filter(item => item.id)) {
-      results.set(item.lodelid, item);
+    for (const item of list.filter(item => (item.lodelid && item.sitename))) {
+      results.set(`${item.sitename}/${item.lodelid}`, item);
 
       try {
         yield cacheResult(`${item.sitename}/${item.lodelid}`, item);
@@ -121,13 +121,14 @@ module.exports = function () {
     }
 
     for (const [ec, done] of ecs) {
+      const id = `${ec.title_id}/${ec.lodelid}`;
 
-      if (results.has(ec.lodelid)) {
-        enrichEc(ec, results.get(ec.unitid));
+      if (results.has(id)) {
+        enrichEc(ec, results.get(id));
       } else {
         try {
           // If we can't find a result for a given ID, we cache an empty document
-          yield cacheResult(`${ec.title_id}/${ec.lodelid}`, {});
+          yield cacheResult(id, {});
         } catch (e) {
           report.inc('general', 'oej-cache-fails');
         }
