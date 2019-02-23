@@ -157,7 +157,7 @@ module.exports = function () {
           return reject(err);
         }
 
-        if (response.statusCode !== 200 || response.statusCode !== 304) {
+        if (response.statusCode !== 200 && response.statusCode !== 304) {
           report.inc('general', 'oej-query-fails');
           return reject(new Error(`${response.statusCode} ${response.statusMessage}`));
         }
