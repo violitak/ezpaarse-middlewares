@@ -6,11 +6,11 @@
 module.exports = function throttler() {
   this.logger.verbose('Initializing throttler');
 
-  var gap = parseInt(this.request.header('Throttling')) || 0;
+  let gap = parseInt(this.request.header('Throttling')) || 0;
   if (gap < 0) { gap = 0; }
 
-  var buffer = [];
-  var busy   = false;
+  let buffer = [];
+  let busy   = false;
 
   function process(done) {
     busy = true;
@@ -19,7 +19,7 @@ module.exports = function throttler() {
       done();
 
       if (buffer.length > 0) {
-        process(buffer.shift());
+        process.call(this, buffer.shift());
       } else {
         busy = false;
         this.drain();
