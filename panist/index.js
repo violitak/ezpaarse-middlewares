@@ -106,7 +106,7 @@ module.exports = function () {
         const [ec, done] = buffer.shift() || [];
         if (!ec) { break; }
 
-        if (ec.platform !== 'istex' || !ec.unitid) {
+        if (ec.platform !== 'panist' || !ec.unitid) {
           done();
           continue;
         }
