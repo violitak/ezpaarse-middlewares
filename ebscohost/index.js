@@ -10,6 +10,13 @@ const path = require('path');
 module.exports = function () {
   let list;
 
+  if (this.job.outputFields.added.indexOf('db_id') === -1) {
+    this.job.outputFields.added.push('db_id');
+  }
+  if (this.job.outputFields.added.indexOf('db_title') === -1) {
+    this.job.outputFields.added.push('db_title');
+  }
+
   return new Promise((resolve, reject) => {
     fs.readFile(path.resolve(__dirname, 'list.json'), 'utf8', (err, content) => {
       if (err) { return reject(err); }
