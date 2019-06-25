@@ -9,11 +9,12 @@ const doiPattern = /^10\.[0-9]{4,}\/[a-z0-9\-._: ;()/]+$/i;
  * Enrich ECs with crossref data
  */
 module.exports = function () {
-  const self         = this;
-  const req          = this.request;
-  const report       = this.report;
-  const disabled     = /^false$/i.test(req.header('crossref-enrich'));
-  const cacheEnabled = !/^false$/i.test(req.header('crossref-cache'));
+  const self           = this;
+  const req            = this.request;
+  const report         = this.report;
+  const disabled       = /^false$/i.test(req.header('crossref-enrich'));
+  const cacheEnabled   = !/^false$/i.test(req.header('crossref-cache'));
+  const includeLicense = /^true$/i.test(req.header('crossref-license'));
 
   if (disabled) {
     self.logger.verbose('Crossref enrichment not activated');
@@ -27,6 +28,9 @@ module.exports = function () {
   }
   if (this.job.outputFields.added.indexOf('subject') === -1) {
     this.job.outputFields.added.push('subject');
+  }
+  if (includeLicense && this.job.outputFields.added.indexOf('license') === -1) {
+    this.job.outputFields.added.push('license');
   }
 
   const ttl        = parseInt(req.header('crossref-ttl')) || 3600 * 24 * 7;
@@ -346,6 +350,11 @@ module.exports = function () {
         ec['print_identifier'] = ec['print_identifier'] || item['ISSN'];
       }
     }
+
+    if (includeLicense && item['license']) {
+      ec['license'] = JSON.stringify(item['license']);
+    }
+
     return item;
   }
 };
