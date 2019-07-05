@@ -1,71 +1,84 @@
-/* eslint max-len: 0 */
 'use strict';
 
 const { contextify } = require('../mock');
 const mw = require('.');
 const { expect } = require('chai');
 
+const timestamp = '1557058490';
+const datetime = new Date(timestamp * 1000); // 2019-05-05T12:14:50.000Z
+
+const year = datetime.getFullYear();
+const month = (datetime.getMonth() + 1).toString().padStart(2, 0);
+const day = (datetime.getDate()).toString().padStart(2, 0);
+
+// The date/hour in the generated session ID depends on timezone
+const date = `${year}-${month}-${day}`;
+const hour = datetime.getHours().toString().padStart(2, 0);
+
 const tests = [
   {
-    fields: 'session:sid',
-    ec: {
-      host: '140.128.66.101',
-      'user-agent': 'mozilla',
-      login: 'john.doo',
-      date: '2019-05-05',
-      timestamp: '1557058490'
-    },
-    sessionId: {
-      name: 'sid',
-      value: '2019-05-05|14|john.doo'
-    }
-  },
-  {
+    label: 'uses login if any',
     fields: null,
     ec: {
       host: '140.128.66.101',
       'user-agent': 'mozilla',
       login: 'john.doo',
-      date: '2019-05-05',
-      timestamp: '1557058490'
+      date,
+      timestamp
     },
     sessionId: {
       name: 'session_id',
-      value: '2019-05-05|14|john.doo'
+      value: `${date}|${hour}|john.doo`
     }
   },
   {
-    fields: 'user:user',
+    label: 'uses host and user agent if both are set',
+    fields: null,
+    ec: {
+      host: '140.128.66.101',
+      'user-agent': 'mozilla',
+      date,
+      timestamp
+    },
+    sessionId: {
+      name: 'session_id',
+      value: `${date}|${hour}|140.128.66.101|mozilla`
+    }
+  },
+  {
+    label: 'handles custom user and session fields',
+    fields: 'user:user, session:sid',
     ec: {
       host: '140.128.66.101',
       'user-agent': 'mozilla',
       user: 'john.doo',
-      date: '2019-05-05',
-      timestamp: '1557058490'
+      date,
+      timestamp
     },
     sessionId: {
-      name: 'session_id',
-      value: '2019-05-05|14|john.doo'
+      name: 'sid',
+      value: `${date}|${hour}|john.doo`
     }
   },
   {
-    fields: null,
+    label: 'handles custom host and user agent fields',
+    fields: 'host:ip, useragent:ua',
     ec: {
-      host: '140.128.66.101',
-      'user-agent': 'mozilla',
-      date: '2019-05-05',
-      timestamp: '1557058490'
+      ip: '140.128.66.101',
+      ua: 'mozilla',
+      date,
+      timestamp
     },
     sessionId: {
       name: 'session_id',
-      value: '2019-05-05|14|140.128.66.101|mozilla'
+      value: `${date}|${hour}|140.128.66.101|mozilla`
     }
-  }
+  },
 ];
 
 describe('session-id', () => {
-  it('should create session IDs', async () => {
-    for (const { fields, ec, sessionId } of tests) {
+  for (const { label, fields, ec, sessionId } of tests) {
+    it(label, async () => {
       const process = await contextify(mw, ctx => {
         if (fields) {
           ctx.request.headers['session-id-fields'] = fields;
@@ -74,6 +87,6 @@ describe('session-id', () => {
       await new Promise(resolve => process(ec, resolve));
 
       expect(ec).to.have.property(sessionId.name, sessionId.value);
-    }
-  });
+    });
+  }
 });
