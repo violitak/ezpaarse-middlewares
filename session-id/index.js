@@ -46,7 +46,7 @@ module.exports = function sessionGenerator() {
     } else if (ec[fields.cookie]) {
       ec[fields.session] = `${ec.date}|${hours}|${ec[fields.cookie]}`;
     } else if (ec[fields.host] && ec[fields.useragent]) {
-      ec[fields.session] = `${ec.date}|${hours}|${ec.host}|${ec[fields.useragent]}`;
+      ec[fields.session] = `${ec.date}|${hours}|${ec[fields.host]}|${ec[fields.useragent]}`;
     }
 
     next();
