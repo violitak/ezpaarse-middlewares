@@ -29,6 +29,10 @@ const tests = [
     sessionId: {
       name: 'session_id',
       value: `${date}|${hour}|john.doo`
+    },
+    userId: {
+      name: 'user_id',
+      value: 'john.doo'
     }
   },
   {
@@ -43,11 +47,15 @@ const tests = [
     sessionId: {
       name: 'session_id',
       value: `${date}|${hour}|140.128.66.101|mozilla`
+    },
+    userId: {
+      name: 'user_id',
+      value: '140.128.66.101|mozilla'
     }
   },
   {
-    label: 'handles custom user and session fields',
-    fields: 'user:user, session:sid',
+    label: 'handles custom user, user ID and session fields',
+    fields: 'user:user, userid: uid, session:sid',
     ec: {
       host: '140.128.66.101',
       'user-agent': 'mozilla',
@@ -58,6 +66,10 @@ const tests = [
     sessionId: {
       name: 'sid',
       value: `${date}|${hour}|john.doo`
+    },
+    userId: {
+      name: 'uid',
+      value: 'john.doo'
     }
   },
   {
@@ -72,12 +84,16 @@ const tests = [
     sessionId: {
       name: 'session_id',
       value: `${date}|${hour}|140.128.66.101|mozilla`
+    },
+    userId: {
+      name: 'user_id',
+      value: '140.128.66.101|mozilla'
     }
   },
 ];
 
 describe('session-id', () => {
-  for (const { label, fields, ec, sessionId } of tests) {
+  for (const { label, fields, ec, sessionId, userId } of tests) {
     it(label, async () => {
       const process = await contextify(mw, ctx => {
         if (fields) {
@@ -87,6 +103,7 @@ describe('session-id', () => {
       await new Promise(resolve => process(ec, resolve));
 
       expect(ec).to.have.property(sessionId.name, sessionId.value);
+      expect(ec).to.have.property(userId.name, userId.value);
     });
   }
 });

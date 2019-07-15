@@ -8,6 +8,7 @@ module.exports = function sessionGenerator() {
 
   const fields = {
     session: 'session_id',
+    userid: 'user_id',
     user: 'login',
     cookie: 'cookie',
     useragent: 'user-agent',
@@ -31,6 +32,9 @@ module.exports = function sessionGenerator() {
   if (this.job.outputFields.added.indexOf(fields.session) === -1) {
     this.job.outputFields.added.push(fields.session);
   }
+  if (this.job.outputFields.added.indexOf(fields.userid) === -1) {
+    this.job.outputFields.added.push(fields.userid);
+  }
 
   return (ec, next) => {
     if (!ec || ec[fields.session]) {
@@ -41,12 +45,16 @@ module.exports = function sessionGenerator() {
     let hours = date.getHours();
 
     if (hours < 10) { hours = `0${hours}`; }
-    if (ec[fields.user]) {
-      ec[fields.session] = `${ec.date}|${hours}|${ec[fields.user]}`;
-    } else if (ec[fields.cookie]) {
-      ec[fields.session] = `${ec.date}|${hours}|${ec[fields.cookie]}`;
-    } else if (ec[fields.host] && ec[fields.useragent]) {
-      ec[fields.session] = `${ec.date}|${hours}|${ec[fields.host]}|${ec[fields.useragent]}`;
+
+    let userId = ec[fields.user] || ec[fields.cookie];
+
+    if (!userId && ec[fields.host] && ec[fields.useragent]) {
+      userId = `${ec[fields.host]}|${ec[fields.useragent]}`;
+    }
+
+    if (userId) {
+      ec[fields.userid] = userId;
+      ec[fields.session] = `${ec.date}|${hours}|${userId}`;
     }
 
     next();
