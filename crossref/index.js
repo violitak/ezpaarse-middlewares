@@ -23,6 +23,9 @@ module.exports = function () {
 
   self.logger.verbose('Crossref cache: %s', cacheEnabled ? 'enabled' : 'disabled');
 
+  if (this.job.outputFields.added.indexOf('title') === -1) {
+    this.job.outputFields.added.push('title');
+  }
   if (this.job.outputFields.added.indexOf('type') === -1) {
     this.job.outputFields.added.push('type');
   }
@@ -196,7 +199,7 @@ module.exports = function () {
             try {
               list = yield queryCrossref(identifier, Array.from(packet[identifier]));
             } catch (e) {
-              self.logger.error('Crossref: ', e.message);
+              self.logger.error(`Crossref: ${e.message}`);
               handleCrossrefError(e);
             }
 
@@ -324,20 +327,18 @@ module.exports = function () {
   }
 
   function aggregate(item, ec) {
-    if (item['type'] && /([a-z]+)-([a-z]+)/.test(item['type'])) {
-      ec['publication_title'] = ec['publication_title'] || item['container-title'];
-    } else {
-      ec['publication_title'] = ec['publication_title'] || item['title'];
-    }
+    ec['publication_title'] = ec['publication_title'] || item['container-title'];
+    ec['title'] = ec['title'] || item['title'];
+    ec['doi'] = ec['doi'] || item['DOI'];
+    ec['publisher_name'] = ec['publisher_name'] || item['publisher'];
+    ec['type'] = item['type'];
+
     if (item['issued'] && item['issued']['date-parts'] && item['issued']['date-parts'][0]) {
       ec['publication_date'] = ec['publication_date'] || item['issued']['date-parts'][0][0];
     }
     if (item['subject'] && Array.isArray(item['subject'])) {
       ec['subject'] = item['subject'].join(', ');
     }
-    ec['doi'] = ec['doi'] || item['DOI'];
-    ec['publisher_name'] = ec['publisher_name'] || item['publisher'];
-    ec['type'] = item['type'];
 
     if (item['ISSN']) {
       const identifier = /([0-9A-Z-]*),([0-9-]+)/.exec(item['ISSN']);
