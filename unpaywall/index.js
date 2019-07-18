@@ -36,8 +36,8 @@ module.exports = function () {
   // Minimum number of ECs to keep before resolving them
   let bufferSize = parseInt(req.header('unpaywall-buffer-size'));
 
-  if (isNaN(packetSize)) { packetSize = 5; }
-  if (isNaN(bufferSize)) { bufferSize = 100; }
+  if (isNaN(packetSize)) { packetSize = 10; }
+  if (isNaN(bufferSize)) { bufferSize = 200; }
   if (isNaN(throttle)) { throttle = 100; }
   if (isNaN(ttl)) { ttl = 3600 * 24 * 7; }
 
