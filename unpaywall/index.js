@@ -5,12 +5,15 @@ const request = require('request');
 const { bufferedProcess, wait } = require('../utils.js');
 const cache = ezpaarse.lib('cache')('unpaywall');
 
-const enrichmentFields = [
-  'is_oa',
-  'journal_is_in_doaj',
-  'journal_is_oa',
-  'oa_status'
-];
+// result field => ec field
+const enrichmentFields = {
+  'is_oa': 'is_oa',
+  'journal_is_in_doaj': 'journal_is_in_doaj',
+  'journal_is_oa': 'journal_is_oa',
+  'oa_status': 'oa_status',
+  'updated': 'oa_updated',
+  'oa_request_date': 'oa_request_date'
+};
 
 module.exports = function () {
   this.logger.verbose('Initializing Unpaywall middleware');
@@ -44,7 +47,7 @@ module.exports = function () {
     return err;
   }
 
-  enrichmentFields.forEach(field => {
+  Object.values(enrichmentFields).forEach(field => {
     if (this.job.outputFields.added.indexOf(field) === -1) {
       this.job.outputFields.added.push(field);
     }
@@ -108,9 +111,9 @@ module.exports = function () {
    * @param {Object} result the document used to enrich the EC
    */
   function enrichEc(ec, result) {
-    enrichmentFields.forEach(field => {
+    Object.entries(enrichmentFields).forEach(([field, ecField]) => {
       if (Object.hasOwnProperty.call(result, field)) {
-        ec[field] = result[field];
+        ec[ecField] = result[field];
       }
     });
   }
@@ -168,6 +171,8 @@ module.exports = function () {
         qs: { email }
       };
 
+      const now = new Date();
+
       request(options, (err, response, body) => {
         if (err) {
           report.inc('general', 'unpaywall-query-fails');
@@ -190,6 +195,10 @@ module.exports = function () {
           return reject(e);
         }
 
+        if (typeof result === 'object') {
+          result['oa_request_date'] = now.toISOString();
+        }
+
         resolve(result);
       });
     });
@@ -208,7 +217,7 @@ module.exports = function () {
       // We only cache what we need to limit memory usage
       const cached = {};
 
-      enrichmentFields.forEach(field => {
+      Object.keys(enrichmentFields).forEach(field => {
         if (Object.hasOwnProperty.call(item, field)) {
           cached[field] = item[field];
         }
