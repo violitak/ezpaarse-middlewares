@@ -123,6 +123,12 @@ module.exports = function () {
           continue;
         }
 
+        if (ec.doi && !doiPattern.test(ec.doi)) {
+          report.inc('general', 'crossref-invalid-dois');
+          done();
+          continue;
+        }
+
         if (ec.pii && cacheEnabled) {
           const cachedDoc = yield checkCache(ec.pii);
 
@@ -134,12 +140,6 @@ module.exports = function () {
         }
 
         if (ec.doi && cacheEnabled) {
-          if (!doiPattern.test(ec.doi)) {
-            report.inc('general', 'crossref-invalid-dois');
-            done();
-            continue;
-          }
-
           const cachedDoc = yield checkCache(ec.doi);
 
           if (cachedDoc) {
