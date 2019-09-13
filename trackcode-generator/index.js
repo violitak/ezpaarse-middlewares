@@ -11,7 +11,9 @@ const ttl = 3600 * 24 * 365;
 * Anonymize a list of fields
 */
 module.exports = function anonymizer() {
-  this.logger.verbose('Initializing Trackcode Generator');
+  const logger = this.logger;
+  const report = this.report;
+  logger.verbose('Initializing Trackcode Generator');
 
   if (!cache) {
     const err = new Error(
@@ -20,6 +22,8 @@ module.exports = function anonymizer() {
     err.status = 500;
     return err;
   }
+
+  report.set('general', 'trackcode-cache-fails', 0);
 
   let buffer;
 
@@ -42,7 +46,14 @@ module.exports = function anonymizer() {
       } else {
         ec['trackcode'] = crypto.createHmac('sha1', buffer).update(ec.host).digest('hex');
 
-        yield cacheResult(ec.host, ec.trackcode);
+        try {
+          yield cacheResult(ec.host, ec.trackcode);
+        } catch (e) {
+          if (e.code !== 11000) {
+            // Ignore duplicate key errors (if the same ID has been concurrently inserted)
+            report.inc('general', 'trackcode-cache-fails');
+          }
+        }
       }
 
       ec['host'] = '';
@@ -53,7 +64,7 @@ module.exports = function anonymizer() {
   return new Promise((resolve, reject) => {
     cache.checkIndexes(ttl, function (err) {
       if (err) {
-        this.logger.error(`trackcode generator: failed to ensure indexes - ${err}`);
+        logger.error(`trackcode generator: failed to ensure indexes - ${err}`);
         return reject(new Error('failed to ensure indexes for the cache of trackcode generator'));
       }
 
