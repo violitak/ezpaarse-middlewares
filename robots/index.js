@@ -58,15 +58,19 @@ module.exports = function () {
    * @param {Function} callback
    */
   function increment(trackCode, retry, callback) {
-    cache.collection.update({ id: trackCode }, { $inc: { counter: 1 } }, { upsert: true }, err => {
-      if (err && retry) {
-        return increment(trackCode, false, callback);
-      }
-      if (err) {
-        self.logger.error(`robots: failed to increment count for track code ${trackCode} : ${err}`);
-      }
-      callback();
-    });
+    cache.collection.updateOne(
+      { id: trackCode },
+      { $inc: { counter: 1 } },
+      { upsert: true },
+      err => {
+        if (err && retry) {
+          return increment(trackCode, false, callback);
+        }
+        if (err) {
+          self.logger.error(`robots: failed to increment count for "${trackCode}" : ${err}`);
+        }
+        callback();
+      });
   }
 
   /**
