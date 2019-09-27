@@ -1,6 +1,6 @@
 'use strict';
 
-var crypto = require('crypto');
+const crypto = require('crypto');
 
 /**
  * Anonymize a list of fields
@@ -8,33 +8,41 @@ var crypto = require('crypto');
 module.exports = function anonymizer() {
   this.logger.verbose('Initializing anonymization');
 
-  var header = this.request.header('Crypted-Fields') || 'host,login';
+  const fieldsHeader = this.request.header('Crypted-Fields') || 'host,login';
+  const algorithm = this.request.header('Crypting-Algorithm') || 'sha1';
+  const salt = this.request.header('Crypting-Salt');
 
-  if (header.toLowerCase() === 'disabled') {
+  if (fieldsHeader.toLowerCase() === 'disabled') {
     this.logger.verbose('Crypting disabled');
     return function (ec, next) { next(); };
   }
 
-  var cryptedFields = header.split(',').map(f => f.trim());
+  const cryptedFields = fieldsHeader.split(',').map(f => f.trim());
 
-  this.logger.verbose('Crypted fields: ' + cryptedFields);
+  this.logger.verbose(`Crypted fields: ${cryptedFields}`);
 
-  return new Promise(function (resolve, reject) {
-    crypto.randomBytes(40, function (err, buffer) {
+  if (salt) {
+    return getProcessFunction(cryptedFields, algorithm, salt);
+  }
+
+  return new Promise((resolve, reject) => {
+    crypto.randomBytes(40, (err, buffer) => {
       if (err) { return reject(err); }
-
-      resolve(function anonymize(ec, next) {
-        if (!ec) { return next(); }
-
-        cryptedFields.forEach(function (field) {
-          if (ec[field]) {
-            ec[field] = crypto.createHmac('sha1', buffer).update(ec[field]).digest('hex');
-          }
-        });
-
-        next();
-      });
+      resolve(getProcessFunction(cryptedFields, algorithm, buffer));
     });
   });
-
 };
+
+function getProcessFunction(fields, algorithm, salt) {
+  return function anonymize(ec, next) {
+    if (!ec) { return next(); }
+
+    fields.forEach(function (field) {
+      if (ec[field]) {
+        ec[field] = crypto.createHmac(algorithm, salt).update(ec[field]).digest('hex');
+      }
+    });
+
+    next();
+  };
+}
