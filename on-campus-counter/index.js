@@ -8,8 +8,11 @@ let privateRanges = ['10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16'];
 
 try {
   // eslint-disable-next-line global-require
-  const privateCustomsRanges = require('./privateRanges.json');
-  privateRanges = privateRanges.concat(privateCustomsRanges);
+  const privateCustomsRanges = require('../../config.local.json');
+
+  if (privateCustomsRanges.onCampusCounter) {
+    privateRanges = privateRanges.concat(privateCustomsRanges.onCampusCounter);
+  }
 } catch (e) {
   if (e.code !== 'MODULE_NOT_FOUND') {
     this.logger.verbose(e);
