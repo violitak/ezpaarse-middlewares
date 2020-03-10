@@ -4,7 +4,17 @@ const rangeCheck = require('range_check');
 
 // see https://en.wikipedia.org/wiki/Private_network#Private_IPv4_address_spaces
 // TODO: hardcoded for now, to be externalized (maybe in the ezpaarse config.json)
-const privateRanges = ['10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16'];
+let privateRanges = ['10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16'];
+
+try {
+  // eslint-disable-next-line global-require
+  const privateCustomsRanges = require('./privateRanges.json');
+  privateRanges = privateRanges.concat(privateCustomsRanges);
+} catch (e) {
+  if (e.code !== 'MODULE_NOT_FOUND') {
+    this.logger.verbose(e);
+  }
+}
 
 module.exports = function onCampusCounter() {
   this.logger.verbose('Initializing onCampus counter');
