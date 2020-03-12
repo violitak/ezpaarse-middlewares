@@ -1,3 +1,3 @@
 # ebscohost
 
-Resolve Ebscohost database titles using the officiel short names list
+Retrieves Ebscohost database titles in the official short names list
