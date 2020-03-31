@@ -1,3 +1,3 @@
 # anonymizer
 
-Anonymizes a list of fields
+Anonymizes a list of fields.
