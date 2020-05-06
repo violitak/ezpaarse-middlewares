@@ -344,15 +344,20 @@ module.exports = function () {
       ec['subject'] = item['subject'].join(', ');
     }
 
-    if (item['ISSN']) {
-      const identifier = /([0-9A-Z-]*),([0-9-]+)/.exec(item['ISSN']);
-      if (identifier && identifier[1]) {
-        ec['print_identifier'] = ec['print_identifier'] || identifier[1];
-        if (identifier[2]) {
-          ec['online_identifier'] = ec['online_identifier'] || identifier[2]  ;
+    if (Array.isArray(item['issn-type'])) {
+      item['issn-type'].forEach((issn) => {
+        if (issn.type === 'print') {
+          ec['print_identifier'] = ec['print_identifier'] || issn.value;
+        } else if (issn.type === 'electronic') {
+          ec['online_identifier'] = ec['online_identifier'] || issn.value;
         }
-      } else {
-        ec['print_identifier'] = ec['print_identifier'] || item['ISSN'];
+      });
+    } else if (Array.isArray(item['ISSN'])) {
+      if (item['ISSN'][0]) {
+        ec['print_identifier'] = ec['print_identifier'] || item['ISSN'][0];
+      }
+      if (item['ISSN'][1]) {
+        ec['online_identifier'] = ec['online_identifier'] || item['ISSN'][1];
       }
     }
 
