@@ -327,8 +327,12 @@ module.exports = function () {
   }
 
   function aggregate(item, ec) {
-    ec['publication_title'] = ec['publication_title'] || item['container-title'];
-    ec['title'] = ec['title'] || item['title'];
+    if (Array.isArray(item['container-title'])) {
+      ec['publication_title'] = ec['publication_title'] || item['container-title'][0];
+    }
+    if (Array.isArray(item['title'])) {
+      ec['title'] = ec['title'] || item['title'][0];
+    }
     ec['doi'] = ec['doi'] || item['DOI'];
     ec['publisher_name'] = ec['publisher_name'] || item['publisher'];
     ec['type'] = item['type'];
