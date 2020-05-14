@@ -35,7 +35,10 @@ exports.bufferedProcess = function (mw, options) {
       if (!busy) {
         drainBuffer()
           .then(() => { lastCallback(); })
-          .catch(err => { this.job._stop(err); });
+          .catch(err => {
+            mw.logger.error(err.message);
+            mw.job._stop(err);
+          });
       }
       return;
     }
@@ -52,7 +55,8 @@ exports.bufferedProcess = function (mw, options) {
 
         if (typeof lastCallback === 'function') { lastCallback(); }
       }).catch(err => {
-        this.job._stop(err);
+        mw.logger.error(err.message);
+        mw.job._stop(err);
       });
     }
   };
@@ -118,15 +122,9 @@ exports.bufferedProcess = function (mw, options) {
     return co(function* () {
       while (buffer.length >= bufferSize || (lastCallback && buffer.length > 0)) {
         const packet = yield getPacket();
-
-        try {
-          const res = onPacket(packet);
-          if (res instanceof Promise) {
-            yield res;
-          }
-        } catch (e) {
-          mw.logger.error(e.message);
-          mw.job._stop(e);
+        const res = onPacket(packet);
+        if (res instanceof Promise) {
+          yield res;
         }
       }
     });
