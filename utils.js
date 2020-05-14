@@ -70,9 +70,11 @@ exports.bufferedProcess = function (mw, options) {
       groups: new Map()
     };
 
+    let maxGroupSize = 0;
+
     function fullPacket () {
       if (typeof groupBy === 'function') {
-        return packet.groups.size >= packetSize;
+        return maxGroupSize >= packetSize;
       }
       return packet.ecs.length >= packetSize;
     }
@@ -100,12 +102,15 @@ exports.bufferedProcess = function (mw, options) {
       }
 
       if (typeof groupBy === 'function') {
-        const group = groupBy(ec);
+        const groupId = groupBy(ec);
+        const group = packet.groups.get(groupId);
 
-        if (!packet.groups.has(group)) {
-          packet.groups.set(group, [ec]);
+        if (group) {
+          group.push([ec, done]);
+          maxGroupSize = Math.max(maxGroupSize, group.length);
         } else {
-          packet.groups.get(group).push(ec);
+          packet.groups.set(groupId, [[ec, done]]);
+          maxGroupSize = Math.max(maxGroupSize, 1);
         }
       }
 
