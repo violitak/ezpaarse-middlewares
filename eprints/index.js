@@ -8,8 +8,11 @@ var parseString = require('xml2js').parseString;
 
 // result field => ec field
 const enrichmentFields = {
-  'dc:title': 'ep_title',
-  'dc:date': 'ep_date'
+  'dc:title': 'publication_title',
+  'dc:date': 'publication_date',
+  'dc:relation': 'doi',
+  'dc:publisher': 'publisher_name',
+  'dc:language': 'language'
 };
 
 module.exports = function eprints() {
@@ -70,11 +73,10 @@ module.exports = function eprints() {
      * @returns {Boolean|Promise} true if the EC should be enriched, false otherwise
      */
     filter: ec => {
-      if(ec.title_id) { return false; }
       if (!ec.unitid) { return false; }
       if (!cacheEnabled) { return true; }
 
-      return findInCache(ec.unitid).then(cachedDoc => {
+      return findInCache(ec.unitid.split('/')[0]).then(cachedDoc => {
         if (cachedDoc) {
           enrichEc(ec, cachedDoc);
           return false;
@@ -103,11 +105,10 @@ module.exports = function eprints() {
      * @param {Array<Object>} ecs
      * @param {Map<String, Set<String>>} groups
      */
-    function* onPacket({ ecs }) {
-      if (ecs.length === 0) { return; }
-  
-      yield Promise.all(ecs.map(([ec, done]) => co.wrap(processEc)(ec, done)));
-    }
+  function* onPacket({ ecs }) {
+    if (ecs.length === 0) { return; }
+    yield Promise.all(ecs.map(([ec, done]) => co.wrap(processEc)(ec, done)));
+  }
 
   /**
    * Enrich an EC using the result of a query
@@ -117,12 +118,12 @@ module.exports = function eprints() {
   function enrichEc(ec, result) {
     Object.entries(enrichmentFields).forEach(([field, ecField]) => {
       if (Object.hasOwnProperty.call(result, field)) {
-        ec[ecField] = result[field][0].replace(/(\r\n|\n|\r)/gm,' ');
+        ec[ecField] = result[field][0].replace(/(\r\n|\n|\r)/gm, ' ');
       }
     });
   }
 
-   /**
+  /**
    * Process and enrich one EC
    * @param {Object} ec the EC to process
    * @param {Function} done the callback
@@ -139,7 +140,7 @@ module.exports = function eprints() {
       }
 
       try {
-        result = yield query(ec.unitid);
+        result = yield query(ec.unitid.split('/')[0]);
       } catch (e) {
         logger.error(`eprints: ${e.message}`);
       }
@@ -148,8 +149,8 @@ module.exports = function eprints() {
     }
 
     try {
-      // If we can't find a result for a given DOI, we cache an empty document
-      yield cacheResult(ec.unitid, result || {});
+      // If we can't find a result for a given ID, we cache an empty document
+      yield cacheResult(ec.unitid.split('/')[0], result || {});
     } catch (e) {
       report.inc('general', 'eprints-cache-fails');
     }
@@ -164,48 +165,47 @@ module.exports = function eprints() {
    * Request metadata from OAI-PMH API for a given ID
    * @param {String} id the id to query
    */
-  function query(id){
+  function query (id) {
     report.inc('general', 'eprints-queries');
     return new Promise((resolve, reject) => {
       const options = {
         method: 'GET',
         uri: `https://${domainName}/cgi/oai2?verb=GetRecord&metadataPrefix=oai_dc&identifier=oai:${domainName}:${id}`,
       };
-  
+
       request(options, (err, res, body) => {
-        if(err){
+        if (err) {
           report.inc('general', 'eprints-query-fails');
           return reject(err);
         }
 
         parseString(body, function (err, result) {
-          if(err){
+          if (err) {
             report.inc('general', 'eprints-query-fails');
             return reject(err);
           }
-      
+
           if (result.statusCode === 404) {
             return resolve({});
           }
-      
-          if(result['OAI-PMH'].hasOwnProperty('error')){
+          if (result['OAI-PMH'].hasOwnProperty('error')) {
             report.inc('general', 'eprints-query-fails');
             logger.error(`eprints: ${result['OAI-PMH'].error[0]._} ${id}`);
             return resolve({});
           }
 
-          if(!result['OAI-PMH'].GetRecord[0].record[0].hasOwnProperty('metadata')){
+          if (!result['OAI-PMH'].GetRecord[0].record[0].hasOwnProperty('metadata')) {
             report.inc('general', 'eprints-query-fails');
             logger.error(`eprints: Deleted item ${id}`);
             return resolve({});
           }
-          resolve(result['OAI-PMH'].GetRecord[0].record[0].metadata[0]['oai_dc:dc'][0])
+          resolve(result['OAI-PMH'].GetRecord[0].record[0].metadata[0]['oai_dc:dc'][0]);
         });
       });
     });
   }
 
-   /**
+  /**
    * Cache an item with a given ID
    * @param {String} id the ID of the item
    * @param {Object} item the item to cache
@@ -245,4 +245,4 @@ module.exports = function eprints() {
       });
     });
   }
-}
+};
