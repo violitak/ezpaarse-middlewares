@@ -190,13 +190,11 @@ module.exports = function eprints() {
           }
           if (result['OAI-PMH'].hasOwnProperty('error')) {
             report.inc('general', 'eprints-query-fails');
-            logger.error(`eprints: ${result['OAI-PMH'].error[0]._} ${id}`);
             return resolve({});
           }
 
           if (!result['OAI-PMH'].GetRecord[0].record[0].hasOwnProperty('metadata')) {
             report.inc('general', 'eprints-query-fails');
-            logger.error(`eprints: Deleted item ${id}`);
             return resolve({});
           }
           resolve(result['OAI-PMH'].GetRecord[0].record[0].metadata[0]['oai_dc:dc'][0]);
