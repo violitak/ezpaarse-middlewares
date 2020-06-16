@@ -170,7 +170,7 @@ module.exports = function eprints() {
     return new Promise((resolve, reject) => {
       const options = {
         method: 'GET',
-        uri: `https://${domainName}/cgi/oai2?verb=GetRecord&metadataPrefix=oai_dc&identifier=oai:${domainName}:${id}`,
+        uri: `${domainName}/cgi/oai2?verb=GetRecord&metadataPrefix=oai_dc&identifier=oai:${domainName.split('/')[2]}:${id}`,
       };
 
       request(options, (err, res, body) => {
