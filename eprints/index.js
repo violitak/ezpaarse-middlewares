@@ -47,13 +47,7 @@ module.exports = function eprints() {
     return err;
   }
 
-  if (!domainName) {
-    const err = new Error('domain name undifined');
-    err.status = 500;
-    return err;
-  }
-
-  if (!/^(http|https):\/\//i.test(domainName)) {
+  if (!/^(http|https):\/\//i.test(domainName) || !domainName) {
     const err = new Error('domain name invalid');
     err.status = 500;
     return err;
@@ -82,7 +76,10 @@ module.exports = function eprints() {
       if (!ec.unitid) { return false; }
       if (!cacheEnabled) { return true; }
 
-      return findInCache(ec.unitid.split('/')[0]).then(cachedDoc => {
+      const unitid = ec.unitid.split('/');
+      if (!unitid.length) { return false; }
+
+      return findInCache(unitid.shift()).then(cachedDoc => {
         if (cachedDoc) {
           enrichEc(ec, cachedDoc);
           return false;
@@ -139,14 +136,16 @@ module.exports = function eprints() {
     let tries = 0;
     let result;
 
+    const unitid = ec.unitid.split('/');
+    if (!unitid.length) { return done(); }
+
     while (typeof result === 'undefined') {
       if (++tries > maxAttempts) {
         const err = new Error(`Failed to query eprints ${maxAttempts} times in a row`);
         return Promise.reject(err);
       }
-
       try {
-        result = yield query(ec.unitid.split('/')[0]);
+        result = yield query(unitid.shift());
       } catch (e) {
         logger.error(`eprints: ${e.message}`);
       }
@@ -156,7 +155,7 @@ module.exports = function eprints() {
 
     try {
       // If we can't find a result for a given ID, we cache an empty document
-      yield cacheResult(ec.unitid.split('/')[0], result || {});
+      yield cacheResult(unitid.shift(), result || {});
     } catch (e) {
       report.inc('general', 'eprints-cache-fails');
     }
@@ -174,13 +173,15 @@ module.exports = function eprints() {
   function query (id) {
     report.inc('general', 'eprints-queries');
     return new Promise((resolve, reject) => {
+      const hostname = new URL(domainName).hostname;
+
       const options = {
         method: 'GET',
         uri: `${domainName}/cgi/oai2`,
         qs: {
           verb: 'GetRecord',
           metadataPrefix: 'oai_dc',
-          identifier: `oai:${domainName.split('/')[2]}:${id}`,
+          identifier: `oai:${hostname}:${id}`,
         },
       };
 
