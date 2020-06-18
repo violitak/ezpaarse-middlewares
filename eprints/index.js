@@ -53,6 +53,12 @@ module.exports = function eprints() {
     return err;
   }
 
+  if (!/^(http|https):\/\//i.test(domainName)) {
+    const err = new Error('domain name invalid');
+    err.status = 500;
+    return err;
+  }
+
   Object.values(enrichmentFields).forEach(field => {
     if (this.job.outputFields.added.indexOf(field) === -1) {
       this.job.outputFields.added.push(field);
@@ -170,7 +176,12 @@ module.exports = function eprints() {
     return new Promise((resolve, reject) => {
       const options = {
         method: 'GET',
-        uri: `${domainName}/cgi/oai2?verb=GetRecord&metadataPrefix=oai_dc&identifier=oai:${domainName.split('/')[2]}:${id}`,
+        uri: `${domainName}/cgi/oai2`,
+        qs: {
+          verb: 'GetRecord',
+          metadataPrefix: 'oai_dc',
+          identifier: `oai:${domainName.split('/')[2]}:${id}`,
+        },
       };
 
       request(options, (err, res, body) => {
