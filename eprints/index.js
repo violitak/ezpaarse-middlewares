@@ -4,7 +4,7 @@ const request = require('request');
 const co = require('co');
 const cache = ezpaarse.lib('cache')('eprints');
 const { bufferedProcess, wait } = require('../utils.js');
-var parseString = require('xml2js').parseString;
+const parseString = require('xml2js').parseString;
 
 // result field => ec field
 const enrichmentFields = {
@@ -14,6 +14,8 @@ const enrichmentFields = {
   'dc:publisher': 'publisher_name',
   'dc:language': 'language'
 };
+
+const resultFields = ['GetRecord','record','metadata','oai_dc:dc'];
 
 module.exports = function eprints() {
   this.logger.verbose('Initializing eprints middleware');
@@ -62,6 +64,8 @@ module.exports = function eprints() {
   report.set('general', 'eprints-queries', 0);
   report.set('general', 'eprints-query-fails', 0);
   report.set('general', 'eprints-cache-fails', 0);
+  report.set('general', 'eprints-item-deleted',0);
+  report.set('general', 'eprints-miss-id',0);
 
   const process = bufferedProcess(this, {
     packetSize,
@@ -136,16 +140,14 @@ module.exports = function eprints() {
     let tries = 0;
     let result;
 
-    const unitid = ec.unitid.split('/');
-    if (!unitid.length) { return done(); }
-
     while (typeof result === 'undefined') {
       if (++tries > maxAttempts) {
         const err = new Error(`Failed to query eprints ${maxAttempts} times in a row`);
         return Promise.reject(err);
       }
+
       try {
-        result = yield query(unitid.shift());
+        result = yield query(ec.unitid.split('/')[0]);
       } catch (e) {
         logger.error(`eprints: ${e.message}`);
       }
@@ -155,7 +157,7 @@ module.exports = function eprints() {
 
     try {
       // If we can't find a result for a given ID, we cache an empty document
-      yield cacheResult(unitid.shift(), result || {});
+      yield cacheResult(ec.unitid.split('/')[0], result || {});
     } catch (e) {
       report.inc('general', 'eprints-cache-fails');
     }
@@ -200,19 +202,42 @@ module.exports = function eprints() {
           if (result.statusCode === 404) {
             return resolve({});
           }
+
           if (result['OAI-PMH'].hasOwnProperty('error')) {
-            report.inc('general', 'eprints-query-fails');
+            report.inc('general', 'eprints-miss-id');
+            logger.error(`${id} id does not exist`);
             return resolve({});
           }
 
-          if (!result['OAI-PMH'].GetRecord[0].record[0].hasOwnProperty('metadata')) {
+          if (!verifFields(result['OAI-PMH'])) {
             report.inc('general', 'eprints-query-fails');
+            return reject(new Error('incorrect field'));
+          }
+
+          if (!result['OAI-PMH'].GetRecord[0].record[0].hasOwnProperty('metadata')) {
+            report.inc('general', 'eprints-item-deleted');
             return resolve({});
           }
+
           resolve(result['OAI-PMH'].GetRecord[0].record[0].metadata[0]['oai_dc:dc'][0]);
         });
       });
     });
+  }
+
+  /**
+   * Verifies that the fields of the result are valid
+   * @param {Object} res the result to verify
+   */
+  function verifFields(res) {
+    resultFields.forEach(function(field){
+      if(res.hasOwnProperty(field)){
+        res =res[field][0];
+      }else{
+        return false;
+      }
+    })
+    return true;
   }
 
   /**
