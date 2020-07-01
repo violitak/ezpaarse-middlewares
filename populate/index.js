@@ -27,6 +27,9 @@ module.exports = function () {
 
   fields.forEach(([name, value]) => {
     this.logger.verbose(`Creating field "${name}" with value "${value}"`);
+    if (this.job.outputFields.added.indexOf(name) === -1) {
+      this.job.outputFields.added.push(name);
+    }
   });
 
   return function process(ec, next) {
