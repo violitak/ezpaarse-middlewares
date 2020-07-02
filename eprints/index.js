@@ -77,12 +77,13 @@ module.exports = function eprints() {
      * @returns {Boolean|Promise} true if the EC should be enriched, false otherwise
      */
     filter: ec => {
-      if (!ec.unitid) { return false; }
-      if (!/^[0-9]+$/i.test(ec.unitid)) { return false; }
-      if (!cacheEnabled) { return true; }
 
+      if (!ec.unitid) { return false; }
       const unitid = ec.unitid.split('/');
       if (!unitid.length) { return false; }
+
+      if (!/^[0-9]+$/i.test(unitid[0])) { return false; }
+      if (!cacheEnabled) { return true; }
 
       return findInCache(unitid.shift()).then(cachedDoc => {
         if (cachedDoc) {
