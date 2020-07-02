@@ -15,7 +15,7 @@ const enrichmentFields = {
   'dc:language': 'language'
 };
 
-const resultFields = ['GetRecord','record','metadata','oai_dc:dc'];
+const resultFields = ['GetRecord', 'record', 'metadata', 'oai_dc:dc'];
 
 module.exports = function eprints() {
   this.logger.verbose('Initializing eprints middleware');
@@ -64,8 +64,8 @@ module.exports = function eprints() {
   report.set('general', 'eprints-queries', 0);
   report.set('general', 'eprints-query-fails', 0);
   report.set('general', 'eprints-cache-fails', 0);
-  report.set('general', 'eprints-item-deleted',0);
-  report.set('general', 'eprints-miss-id',0);
+  report.set('general', 'eprints-item-deleted', 0);
+  report.set('general', 'eprints-miss-id', 0);
 
   const process = bufferedProcess(this, {
     packetSize,
@@ -77,11 +77,13 @@ module.exports = function eprints() {
      * @returns {Boolean|Promise} true if the EC should be enriched, false otherwise
      */
     filter: ec => {
-      if (!ec.unitid) { return false; }
-      if (!cacheEnabled) { return true; }
 
+      if (!ec.unitid) { return false; }
       const unitid = ec.unitid.split('/');
       if (!unitid.length) { return false; }
+
+      if (!/^[0-9]+$/i.test(unitid[0])) { return false; }
+      if (!cacheEnabled) { return true; }
 
       return findInCache(unitid.shift()).then(cachedDoc => {
         if (cachedDoc) {
@@ -230,13 +232,13 @@ module.exports = function eprints() {
    * @param {Object} res the result to verify
    */
   function verifFields(res) {
-    resultFields.forEach(function(field){
-      if(res.hasOwnProperty(field)){
+    resultFields.forEach(function(field) {
+      if (res.hasOwnProperty(field)) {
         res =res[field][0];
-      }else{
+      } else {
         return false;
       }
-    })
+    });
     return true;
   }
 
