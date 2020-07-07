@@ -7,7 +7,7 @@ Get metadata from OAI-PMH.
 + **eprints-cache** : Enabled/Disabled cache
 + **eprints-ttl** : Time-to-live of cached documents
 + **eprints-throttle** : Minimum wait time before each request (in ms)
-+ **eprints-packet-size** : Maximum number of DOIs to query
++ **eprints-packet-size** : Maximum number of article to query
 + **eprints-buffer-size** : Minimum number of ECs to keep before resolving them
 + **eprints-domain-name** : Domain name eprints platform 
 
