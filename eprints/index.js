@@ -133,7 +133,7 @@ module.exports = function eprints() {
             ec[ecField] = `${match[3]}/${match[4]}`;
           }
         } else {
-          ec[ecField] = result[field][0].replace(/(\r\n|\n|\r)/gm, ' ').replace(/(,|;)/gm, '""');
+          ec[ecField] = result[field][0].replace(/(\r\n|\n|\r)/gm, ' ').replace(/;/gm, '');
 
         }
       }
