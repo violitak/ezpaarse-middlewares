@@ -78,7 +78,6 @@ module.exports = function eprints() {
      */
     filter: ec => {
       ec['domain'] = domainName;
-      ec['title_id'] = ec['title_id'].replace(/\,/g, '"\\,"');
       if (!ec.unitid) { return false; }
       const unitid = ec.unitid.split('/');
       if (!unitid.length) { return false; }
