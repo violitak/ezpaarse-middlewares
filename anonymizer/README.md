@@ -12,8 +12,10 @@ Anonymizes a list of fields.
 
 + ezPAARSE-Middlewares : **anonymizer**
 
-```
+### Example :
+
+```bash
 curl -v -X POST http://localhost:59599
--H "ezPAARSE-Middlewares: anonymizer"
--F "files[]=@access.log"
+  -H "ezPAARSE-Middlewares: anonymizer"
+  -F "files[]=@access.log"
 ```
