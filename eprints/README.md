@@ -16,8 +16,10 @@ Get metadata from OAI-PMH.
 + Default parser : **eprints**
 + ezPAARSE-Middlewares : **eprints**
 
-> curl -v -X POST http://localhost:59599 \
+```
+curl -v -X POST http://localhost:59599 \
  -H "Force-Parser: eprints" \
  -H "ezPAARSE-Middlewares: eprints" \
  -H "eprints-domain-name: https://domain.fr/" \
  -F "files[]=@access.log"
+```
