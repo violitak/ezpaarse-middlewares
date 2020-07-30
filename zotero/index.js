@@ -63,7 +63,6 @@ module.exports = function () {
      * @returns {Boolean|Promise} true if the EC should be enriched, false otherwise
      */
     filter: ec => {
-      if (!ec.doi) { return false; }
       if (!cacheEnabled) { return true; }
 
       return findInCache(ec.doi).then(cachedDoc => {
