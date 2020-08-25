@@ -48,8 +48,11 @@ module.exports = function sessionGenerator() {
 
     let userId = ec[fields.user] || ec[fields.cookie];
 
-    if (!userId && ec[fields.host] && ec[fields.useragent]) {
-      userId = `${ec[fields.host]}|${ec[fields.useragent]}`;
+    if (!userId && ec[fields.host]) {
+      userId = `${ec[fields.host]}`;
+      if (ec[fields.useragent]) {
+        userId += `|${ec[fields.useragent]}`;
+      }
     }
 
     if (userId) {

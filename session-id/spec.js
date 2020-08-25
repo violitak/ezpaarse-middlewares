@@ -54,6 +54,23 @@ const tests = [
     }
   },
   {
+    label: 'uses host if user agent is not set',
+    fields: null,
+    ec: {
+      host: '140.128.66.101',
+      date,
+      timestamp
+    },
+    sessionId: {
+      name: 'session_id',
+      value: `${date}|${hour}|140.128.66.101`
+    },
+    userId: {
+      name: 'user_id',
+      value: '140.128.66.101'
+    }
+  },
+  {
     label: 'handles custom user, user ID and session fields',
     fields: 'user:user, userid: uid, session:sid',
     ec: {
