@@ -8,7 +8,7 @@ By default, only [private IPv4 addresses](https://en.wikipedia.org/wiki/Private_
 
 When a range is associated with a label, `on_campus` will contain the label instead of `Y`.
 
-## Examples
+## Example
 
 ```json
 {
