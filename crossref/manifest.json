@@ -1,0 +1,25 @@
+{
+  "headers": [
+    {
+      "name": "crossref-enrich"
+    },
+    {
+      "name": "crossref-cache"
+    },
+    {
+      "name": "crossref-license"
+    },
+    {
+      "name": "crossref-ttl"
+    },
+    {
+      "name": "crossref-throttle"
+    },
+    {
+      "name": "crossref-paquet-size"
+    },
+    {
+      "name": "crossref-buffer-size"
+    }
+  ]
+}

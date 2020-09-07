@@ -1,0 +1,13 @@
+{
+  "headers": [
+    {
+      "name": "istex-enrich"
+    },
+    {
+      "name": "istex-ttl"
+    },
+    {
+      "name": "istex-throttle"
+    }
+  ]
+}

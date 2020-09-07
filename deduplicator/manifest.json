@@ -1,0 +1,13 @@
+{
+  "headers": [
+    {
+      "name": "double-click-strategy"
+    },
+    {
+      "name": "double-click-removal"
+    },
+    {
+      "name": "double-click-mixed"
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "headers": [
+    {
+      "name": "HAL-Enrich"
+    },
+    {
+      "name": "HAL-TTL"
+    },
+    {
+      "name": "HAL-Throttle"
+    }
+  ]
+}

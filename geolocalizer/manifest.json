@@ -1,0 +1,25 @@
+{
+  "headers": [
+    {
+      "name": "geoip-host"
+    },
+    {
+      "name": "geoip-country"
+    },
+    {
+      "name": "geoip-region"
+    },
+    {
+      "name": "geoip-city"
+    },
+    {
+      "name": "geoip-latitude"
+    },
+    {
+      "name": "geoip-longitude"
+    },
+    {
+      "name": "geoip-coordinates"
+    }
+  ]
+}
