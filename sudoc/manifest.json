@@ -1,0 +1,13 @@
+{
+  "headers": [
+    {
+      "name": "sudoc-enrich"
+    },
+    {
+      "name": "sudoc-ttl"
+    },
+    {
+      "name": "sudoc-throttle"
+    }
+  ]
+}

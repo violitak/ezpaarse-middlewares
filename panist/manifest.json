@@ -1,0 +1,25 @@
+{
+  "headers": [
+    {
+      "name": "panist-enrich"
+    },
+    {
+      "name": "panist-cache"
+    },
+    {
+      "name": "panist-license"
+    },
+    {
+      "name": "panist-ttl"
+    },
+    {
+      "name": "panist-throttle"
+    },
+    {
+      "name": "panist-paquet-size"
+    },
+    {
+      "name": "panist-buffer-size"
+    }
+  ]
+}

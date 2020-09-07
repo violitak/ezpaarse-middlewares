@@ -1,0 +1,25 @@
+{
+  "headers": [
+    {
+      "name": "ezpaarse-enrich"
+    },
+    {
+      "name": "eprints-cache"
+    },
+    {
+      "name": "eprints-ttl"
+    },
+    {
+      "name": "eprints-throttle"
+    },
+    {
+      "name": "eprints-packet-size"
+    },
+    {
+      "name": "eprints-buffer-size"
+    },
+    {
+      "name": "eprints-domain-name"
+    }
+  ]
+}

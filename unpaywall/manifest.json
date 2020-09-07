@@ -1,0 +1,25 @@
+{
+  "headers": [
+    {
+      "name": "unpaywall-enrich"
+    },
+    {
+      "name": "unpaywall-cache"
+    },
+    {
+      "name": "unpaywall-license"
+    },
+    {
+      "name": "unpaywall-ttl"
+    },
+    {
+      "name": "unpaywall-throttle"
+    },
+    {
+      "name": "unpaywall-paquet-size"
+    },
+    {
+      "name": "unpaywall-buffer-size"
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "headers": [
+    {
+      "name": "Crypted-Fields"
+    },
+    {
+      "name": "Crypting-Algorithm"
+    },
+    {
+      "name": "Crypting-Salt"
+    }
+  ]
+}
