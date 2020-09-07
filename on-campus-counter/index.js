@@ -43,7 +43,7 @@ module.exports = function onCampusCounter() {
         return err;
       }
 
-      allRanges.push(range);
+      allRanges.unshift(range);
     }
   }
 

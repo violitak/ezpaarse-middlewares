@@ -88,6 +88,19 @@ describe('on-campus-counter', () => {
     });
   });
 
+  it('should use the label for private addresses', async () => {
+    ezpaarse.config.onCampusCounter = [
+      { label: 'Local Campus', ranges: ['10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16'] },
+    ];
+    const handle = await contextify(mw);
+
+    privateAddresses.forEach(host => {
+      const ec = { host };
+      handle(ec, () => {});
+      expect(ec).to.have.property('on_campus', 'Local Campus');
+    });
+  });
+
   describe('should return an error', () => {
     it('if a range is invalid', async () => {
       ezpaarse.config.onCampusCounter = ['115.foobar.16.0'];
