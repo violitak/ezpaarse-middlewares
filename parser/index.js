@@ -7,8 +7,14 @@ const parserlist = ezpaarse.lib('parserlist');
  * Parse the URL
  */
 module.exports = function () {
-
   const job = this.job;
+  const req = this.request;
+  const filterString = req.header('filter-platforms');
+  let platformFilter;
+
+  if (filterString) {
+    platformFilter = new Set(filterString.split(',').map(platform => platform.trim()));
+  }
 
   if (job.forceECFieldPublisher) {
     this.logger.verbose(`Forced publisher name : ${job.forceECFieldPublisher}`);
@@ -37,6 +43,17 @@ module.exports = function () {
       const err  = new Error('Parser not found');
       err.type = 'ENOPARSER';
       return next(err);
+    }
+
+    if (platformFilter) {
+      parsers = parsers.filter(parser => platformFilter.has(parser.platform));
+
+      if (parsers.length === 0) {
+        // If there are matching parsers that were all filtered out, just ignore this line
+        const err = new Error('irrelevant EC');
+        err.type = 'EIRRELEVANT';
+        return next(err);
+      }
     }
 
     for (const parser of parsers) {
