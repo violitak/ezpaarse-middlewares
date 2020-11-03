@@ -9,6 +9,8 @@ The Unpaywall middleware uses the ``DOI`` found in access events to request Open
 + **unpaywall-throttle** : Minimum time to wait between each packet of queries, in milliseconds. Defaults to ``100``ms
 + **unpaywall-paquet-size** : Maximum number of DOIs to request in parallel. Defaults to ``10``
 + **unpaywall-buffer-size** : Maximum number of memorised access events before sending requests. Defaults to ``200``
++ **unpaywall-max-tries** : Maximum number of attempts if an enrichment fails. Defaults to ``5``.
++ **unpaywall-on-fail** : Strategy to adopt if an enrichment reaches the maximum number of attempts. Can be either of ``abort``, ``ignore`` or ``retry``. Defaults to ``abort``.
 + **unpaywall-email** : The email to use for API calls. Defaults to ``YOUR_EMAIL``.
 
 ### Example

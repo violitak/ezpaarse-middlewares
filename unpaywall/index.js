@@ -27,6 +27,16 @@ module.exports = function () {
 
   logger.verbose(`Unpaywall cache: ${cacheEnabled ? 'enabled' : 'disabled'}`);
 
+  // Strategy to adopt when an enrichment reaches maxTries : abort, ignore, retry
+  let onFail = (req.header('unpaywall-on-fail') || 'abort').toLowerCase();
+  let onFailValues = ['abort', 'ignore', 'retry'];
+
+  if (onFail && !onFailValues.includes(onFail)) {
+    const err = new Error(`Unpaywall-On-Fail should be one of: ${onFailValues.join(', ')}`);
+    err.status = 400;
+    return err;
+  }
+
   // Time-to-live of cached documents
   let ttl = parseInt(req.header('unpaywall-ttl'));
   // Minimum wait time before each request (in ms)
@@ -35,11 +45,14 @@ module.exports = function () {
   let packetSize = parseInt(req.header('unpaywall-packet-size'));
   // Minimum number of ECs to keep before resolving them
   let bufferSize = parseInt(req.header('unpaywall-buffer-size'));
+  // Maximum enrichment attempts
+  let maxTries = parseInt(req.header('unpaywall-max-tries'));
 
   if (isNaN(packetSize)) { packetSize = 10; }
   if (isNaN(bufferSize)) { bufferSize = 200; }
   if (isNaN(throttle)) { throttle = 100; }
   if (isNaN(ttl)) { ttl = 3600 * 24 * 7; }
+  if (isNaN(maxTries)) { maxTries = 5; }
 
   if (!cache) {
     const err = new Error('failed to connect to mongodb, cache not available for Unpaywall');
@@ -124,14 +137,21 @@ module.exports = function () {
    * @param {Function} done the callback
    */
   function* processEc (ec, done) {
-    const maxAttempts = 5;
     let tries = 0;
     let result;
 
-    while (typeof result === 'undefined') {
-      if (++tries > maxAttempts) {
-        const err = new Error(`Failed to query Unpaywall ${maxAttempts} times in a row`);
-        return Promise.reject(err);
+    while (typeof result !== 'object') {
+      if (tries >= maxTries) {
+        if (onFail === 'ignore') {
+          logger.error(`Unpaywall: ignoring EC enrichment after ${maxTries} failed attempts`);
+          done();
+          return;
+        }
+
+        if (onFail === 'abort') {
+          const err = new Error(`Failed to query Unpaywall ${maxTries} times in a row`);
+          return Promise.reject(err);
+        }
       }
 
       try {
@@ -140,7 +160,8 @@ module.exports = function () {
         logger.error(`Unpaywall: ${e.message}`);
       }
 
-      yield wait(throttle);
+      yield wait(throttle * Math.pow(2, tries));
+      tries += 1;
     }
 
     try {
