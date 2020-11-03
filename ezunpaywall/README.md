@@ -1,4 +1,4 @@
-# unpaywall
+# ezunpaywall
 
 Experimental middleware that fetches metadata from the Unpaywall mirror hosted by the Inist-CNRS.
 
