@@ -1,0 +1,9 @@
+{
+  "headers": [
+    { "name": "ezunpaywall-cache" },
+    { "name": "ezunpaywall-ttl" },
+    { "name": "ezunpaywall-throttle" },
+    { "name": "ezunpaywall-paquet-size" },
+    { "name": "ezunpaywall-buffer-size" }
+  ]
+}
