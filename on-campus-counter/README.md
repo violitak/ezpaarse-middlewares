@@ -4,7 +4,7 @@ This middleware adds an `on_campus` field containing `Y` or `N` depending on the
 
 By default, only [private IPv4 addresses](https://en.wikipedia.org/wiki/Private_network#Private_IPv4_address_spaces) are considered on-campus. More ranges can be added by providing an `onCampusCounter` key in the ezPAARSE configuration (`config.local.json`).
 
-`onCampusCounter` should be an array, where each element is either a valid range string, or an object with a string property `label` and an array property `ranges` containing valid range strings.
+`onCampusCounter` should be an array, where each element is either a valid range string, or an object with a string property `label` and an array property `ranges` containing valid range strings. Ranges also accept single IPv4 addresses.
 
 When a range is associated with a label, `on_campus` will contain the label instead of `Y`.
 
@@ -16,7 +16,7 @@ When a range is associated with a label, `on_campus` will contain the label inst
     "115.0.0.0/8",
     {
       "label": "Campus name",
-      "ranges": ["93.25.0.0/16", "118.0.0.0/8"]
+      "ranges": ["93.25.0.0/16", "118.0.0.0/8", "83.112.9.15"]
     }
   ]
 }

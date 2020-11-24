@@ -25,6 +25,8 @@ describe('on-campus-counter', () => {
     ezpaarse.config.onCampusCounter = null;
     const handle = await contextify(mw);
 
+    expect(handle).to.be.a('function');
+
     privateAddresses.forEach(host => {
       const ec = { host };
       handle(ec, () => {});
@@ -41,6 +43,8 @@ describe('on-campus-counter', () => {
   it('should mark addresses in custom IP ranges', async () => {
     ezpaarse.config.onCampusCounter = ['115.0.0.0/8', '93.25.0.0/16'];
     const handle = await contextify(mw);
+
+    expect(handle).to.be.a('function');
 
     // Private network should always be marked
     privateAddresses.forEach(host => {
@@ -66,6 +70,8 @@ describe('on-campus-counter', () => {
       { label: 'Second Campus', ranges: ['93.25.0.0/16'] },
     ];
     const handle = await contextify(mw);
+
+    expect(handle).to.be.a('function');
 
     // Ranges without label should use default value
     privateAddresses.forEach(host => {
@@ -94,10 +100,33 @@ describe('on-campus-counter', () => {
     ];
     const handle = await contextify(mw);
 
+    expect(handle).to.be.a('function');
+
     privateAddresses.forEach(host => {
       const ec = { host };
       handle(ec, () => {});
       expect(ec).to.have.property('on_campus', 'Local Campus');
+    });
+  });
+
+  it('should accept single IPs', async () => {
+    ezpaarse.config.onCampusCounter = [
+      { label: 'Local Campus', ranges: privateAddresses.slice() },
+      { label: 'Some Campus', ranges: externalAddresses.slice() },
+    ];
+    const handle = await contextify(mw);
+
+    expect(handle).to.be.a('function');
+
+    privateAddresses.forEach(host => {
+      const ec = { host };
+      handle(ec, () => {});
+      expect(ec).to.have.property('on_campus', 'Local Campus');
+    });
+    externalAddresses.forEach(host => {
+      const ec = { host };
+      handle(ec, () => {});
+      expect(ec).to.have.property('on_campus', 'Some Campus');
     });
   });
 

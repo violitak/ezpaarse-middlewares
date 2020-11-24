@@ -12,20 +12,23 @@ module.exports = function onCampusCounter() {
   report.set('general', 'on-campus-accesses', 0);
   report.set('general', 'off-campus-accesses', 0);
 
-  let localRanges = privateRanges.slice(); // Contains ranges without label
-  let allRanges = [{ ranges: localRanges }];
+  const singleIps = new Map();
+  const localRanges = { ranges: privateRanges.slice() }; // Contains ranges without label
+  const allRanges = [localRanges];
 
-  const customRanges = Array.isArray(config.onCampusCounter) ? config.onCampusCounter : [];
+  const customRanges = Array.isArray(config.onCampusCounter) ? config.onCampusCounter.slice() : [];
 
   for (const range of customRanges) {
     if (typeof range === 'string') {
-      if (!rangeCheck.isRange(range)) {
+      if (rangeCheck.isRange(range)) {
+        localRanges.ranges.push(range);
+      } else if (rangeCheck.isIP(range)) {
+        singleIps.set(range, localRanges);
+      } else {
         const err = new Error(`invalid IP range: ${range}`);
         err.status = 400;
         return err;
       }
-
-      localRanges.push(range);
     }
 
     if (typeof range === 'object') {
@@ -35,7 +38,7 @@ module.exports = function onCampusCounter() {
         return err;
       }
 
-      const invalidRange = range.ranges.find(r => !rangeCheck.isRange(r));
+      const invalidRange = range.ranges.find(r => (!rangeCheck.isRange(r) && !rangeCheck.isIP(r)));
 
       if (invalidRange) {
         const err = new Error(`invalid IP range: ${invalidRange}`);
@@ -43,15 +46,26 @@ module.exports = function onCampusCounter() {
         return err;
       }
 
+      range.ranges = range.ranges.filter((ipRange) => {
+        if (rangeCheck.isRange(ipRange)) { return true; }
+
+        singleIps.set(ipRange, range);
+        return false;
+      });
+
       allRanges.unshift(range);
     }
   }
 
   return function process(ec, next) {
-    if (!ec) { return next(); }
+    if (!ec || !ec.host) { return next(); }
 
-    // Usage : rangeCheck.inRange('192.168.1.1', ['10.0.0.0/8', '192.0.0.0/8']);
-    const campus = allRanges.find(campus => rangeCheck.inRange(ec.host, campus.ranges));
+    let campus = singleIps.get(ec.host);
+
+    if (!campus) {
+      // Usage : rangeCheck.inRange('192.168.1.1', ['10.0.0.0/8', '192.0.0.0/8']);
+      campus = allRanges.find(campus => rangeCheck.inRange(ec.host, campus.ranges));
+    }
 
     if (campus) {
       report.inc('general', 'on-campus-accesses');
