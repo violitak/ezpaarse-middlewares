@@ -8,9 +8,11 @@ Enriches consultation events with [crossref](http://search.crossref.org/) data f
 + **crossref-cache** : Enable/Disable cache.
 + **crossref-license** : Set to ``true`` to get the ``license`` field as JSON. Disabled by default.
 + **crossref-ttl** : Lifetime of cached documents, in seconds. Defaults to ``7 days (3600 * 24 * 7)``.
-+ **crossref-throttle** : Minimum time to wait between queries, in milliseconds. Defaults to ``200``ms.
++ **crossref-throttle** : Minimum time to wait between queries, in milliseconds. Defaults to ``200``ms. Throttle time ``doubles`` after each failed attempt.
 + **crossref-paquet-size** : Maximum number of identifiers to send for query in a single request. Defaults to ``50``.
 + **crossref-buffer-size** : Maximum number of memorised access events before sending a request. Defaults to ``1000``.
++ **crossref-max-tries** : Maximum number of attempts if an enrichment fails. Defaults to ``5``.
++ **crossref-on-fail** : Strategy to adopt if an enrichment reaches the maximum number of attempts. Can be either of ``abort``, ``ignore`` or ``retry``. Defaults to ``abort``.
 
 ### Example :
 

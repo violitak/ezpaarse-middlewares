@@ -23,6 +23,16 @@ module.exports = function () {
 
   self.logger.verbose('Crossref cache: %s', cacheEnabled ? 'enabled' : 'disabled');
 
+  // Strategy to adopt when an enrichment reaches maxTries : abort, ignore, retry
+  let onFail = (req.header('crossref-on-fail') || 'abort').toLowerCase();
+  let onFailValues = ['abort', 'ignore', 'retry'];
+
+  if (onFail && !onFailValues.includes(onFail)) {
+    const err = new Error(`Crossref-On-Fail should be one of: ${onFailValues.join(', ')}`);
+    err.status = 400;
+    return err;
+  }
+
   if (this.job.outputFields.added.indexOf('title') === -1) {
     this.job.outputFields.added.push('title');
   }
@@ -42,10 +52,11 @@ module.exports = function () {
   const packetSize = parseInt(req.header('crossref-paquet-size')) || 50;
   // Minimum number of ECs to keep before resolving them
   let bufferSize   = parseInt(req.header('crossref-buffer-size'));
+  // Maximum enrichment attempts
+  let maxTries     = parseInt(req.header('crossref-max-tries'));
 
-  if (isNaN(bufferSize)) {
-    bufferSize = 1000;
-  }
+  if (isNaN(bufferSize)) { bufferSize = 1000; }
+  if (isNaN(maxTries)) { maxTries = 5; }
 
   const buffer = [];
   let busy = false;
@@ -182,8 +193,7 @@ module.exports = function () {
           continue;
         }
 
-        const maxAttempts = 5;
-        const results     = new Map();
+        const results = new Map();
 
         for (const identifier of ['doi', 'alternative-id']) {
           if (packet[identifier].size === 0) { continue; }
@@ -191,10 +201,22 @@ module.exports = function () {
           let list;
 
           while (!list) {
-            if (++tries > maxAttempts) {
-              const err = new Error(`Failed to query Crossref ${maxAttempts} times in a row`);
-              return Promise.reject(err);
+            if (tries >= maxTries) {
+              if (onFail === 'ignore') {
+                self.logger.error(
+                  `Crossref: ignoring packet enrichment after ${maxTries} failed attempts`
+                );
+                packet.ecs.forEach(([, done]) => done());
+                return;
+              }
+
+              if (onFail === 'abort') {
+                const err = new Error(`Failed to query Crossref ${maxTries} times in a row`);
+                return Promise.reject(err);
+              }
             }
+
+            yield wait(throttle * Math.pow(2, tries));
 
             try {
               list = yield queryCrossref(identifier, Array.from(packet[identifier]));
@@ -203,7 +225,7 @@ module.exports = function () {
               handleCrossrefError(e);
             }
 
-            yield wait();
+            tries += 1;
           }
 
           for (const item of list) {
@@ -268,8 +290,8 @@ module.exports = function () {
     });
   }
 
-  function wait() {
-    return new Promise(resolve => { setTimeout(resolve, throttle); });
+  function wait(ms) {
+    return new Promise(resolve => { setTimeout(resolve, ms); });
   }
 
   function handleCrossrefError(e) {

@@ -20,6 +20,12 @@
     },
     {
       "name": "crossref-buffer-size"
+    },
+    {
+      "name": "crossref-max-tries"
+    },
+    {
+      "name": "crossref-on-fail"
     }
   ]
 }
