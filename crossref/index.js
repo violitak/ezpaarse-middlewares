@@ -1,7 +1,7 @@
 'use strict';
 
 const co         = require('co');
-const crossref   = require('crossref');
+const request    = require('request');
 const cache      = ezpaarse.lib('cache')('crossref');
 const doiPattern = /^10\.[0-9]{4,}\/[a-z0-9\-._: ;()/]+$/i;
 
@@ -321,15 +321,27 @@ module.exports = function () {
     report.inc('general', 'crossref-queries');
 
     return new Promise((resolve, reject) => {
-      crossref.works({ filter: { [property]: values }, rows: packetSize }, function (err, list) {
+      request({
+        method: 'GET',
+        url: 'https://api.crossref.org/works',
+        timeout: 60000,
+        headers,
+        json: true,
+        qs: {
+          filter: values.map(v => `${property}:${v}`).join(','),
+          rows: packetSize
+        }
+      }, (err, response, body) => {
         if (err) {
           report.inc('general', 'crossref-fails');
           return reject(err);
         }
 
+        const list = body && body.message && body.message.items;
+
         if (!Array.isArray(list)) {
           report.inc('general', 'crossref-fails');
-          return reject(new Error('invalid response'));
+          return reject(new Error('got invalid response from the API'));
         }
 
         return resolve(list);
