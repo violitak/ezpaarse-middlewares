@@ -15,6 +15,7 @@ module.exports = function () {
   const disabled       = /^false$/i.test(req.header('crossref-enrich'));
   const cacheEnabled   = !/^false$/i.test(req.header('crossref-cache'));
   const includeLicense = /^true$/i.test(req.header('crossref-license'));
+  const apiToken       = req.header('crossref-plus-api-token');
 
   if (disabled) {
     self.logger.verbose('Crossref enrichment not activated');
@@ -324,6 +325,12 @@ module.exports = function () {
     report.inc('general', 'crossref-queries');
 
     return new Promise((resolve, reject) => {
+      const headers = {};
+
+      if (apiToken) {
+        headers['crossref-plus-api-token'] = `Bearer ${apiToken}`;
+      }
+
       request({
         method: 'GET',
         url: 'https://api.crossref.org/works',

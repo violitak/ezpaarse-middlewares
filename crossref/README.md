@@ -14,6 +14,7 @@ Enriches consultation events with [crossref](http://search.crossref.org/) data f
 + **crossref-max-tries** : Maximum number of attempts if an enrichment fails. Defaults to ``5``.
 + **crossref-on-fail** : Strategy to adopt if an enrichment reaches the maximum number of attempts. Can be either of ``abort``, ``ignore`` or ``retry``. Defaults to ``abort``.
 + **crossref-base-wait-time** : Time to wait before retrying after a query fails, in milliseconds. Defaults to ``1000``ms. This time ``doubles`` after each attempt.
++ **crossref-plus-api-token** : If you signed up for the ``Plus`` service, put your token in this header.
 
 ### Example :
 
