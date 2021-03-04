@@ -54,9 +54,12 @@ module.exports = function () {
   let bufferSize   = parseInt(req.header('crossref-buffer-size'));
   // Maximum enrichment attempts
   let maxTries     = parseInt(req.header('crossref-max-tries'));
+  // Base wait time after a request fails
+  let baseWaitTime = parseInt(req.header('crossref-base-wait-time'));
 
   if (isNaN(bufferSize)) { bufferSize = 1000; }
   if (isNaN(maxTries)) { maxTries = 5; }
+  if (isNaN(baseWaitTime)) { baseWaitTime = 1000; }
 
   const buffer = [];
   let busy = false;
@@ -216,7 +219,7 @@ module.exports = function () {
               }
             }
 
-            yield wait(throttle * Math.pow(2, tries));
+            yield wait(tries === 0 ? throttle : baseWaitTime * Math.pow(2, tries));
 
             try {
               list = yield queryCrossref(identifier, Array.from(packet[identifier]));
