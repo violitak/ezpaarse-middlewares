@@ -222,7 +222,6 @@ module.exports = function () {
               list = yield queryCrossref(identifier, Array.from(packet[identifier]));
             } catch (e) {
               self.logger.error(`Crossref: ${e.message}`);
-              handleCrossrefError(e);
             }
 
             tries += 1;
@@ -294,26 +293,27 @@ module.exports = function () {
     return new Promise(resolve => { setTimeout(resolve, ms); });
   }
 
-  function handleCrossrefError(e) {
-    const match = /rate limit exceeded: (\d+) requests in (\d+)([smh])/i.exec(e.message);
-    if (!match) { return; }
+  function handleCrossrefRateLimit(response) {
+    const headers = (response && response.headers) || {};
+    const limitHeader = headers['x-rate-limit-limit'];
+    const intervalHeader = headers['x-rate-limit-interval'];
 
-    let interval   = parseInt(match[2]);
-    let nbRequests = parseInt(match[1]);
+    if (!limitHeader || !intervalHeader) { return; }
 
-    if (interval > 0 && nbRequests > 0) {
-      switch (match[3]) {
-      case 'h':
-        interval *= 60;
-        // fallthrough
-      case 'm':
-        interval *= 60;
-        // fallthrough
-      case 's':
-        interval *= 1000;
-        throttle = nbRequests / interval;
-        self.logger.verbose('Crossref: limiting queries to %d req in %d ms', nbRequests, interval);
-      }
+    const nbRequests = Number.parseInt(limitHeader, 10);
+    const interval   = Number.parseInt(intervalHeader, 10); // always in seconds for convenience
+
+    if (!Number.isInteger(nbRequests) || nbRequests <= 0) { return; }
+    if (!Number.isInteger(interval) || interval <= 0) { return; }
+
+    const newThrottle = Math.ceil((interval / nbRequests) * 1000);
+
+    if (newThrottle !== throttle) {
+      throttle = newThrottle;
+      const queriesPerSecond = Math.ceil((1000 / throttle) * 100) / 100;
+      self.logger.info(
+        `Crossref: limiting rate to ${queriesPerSecond} query/s (${throttle}ms throttle time)`
+      );
     }
   }
 
@@ -332,6 +332,8 @@ module.exports = function () {
           rows: packetSize
         }
       }, (err, response, body) => {
+        handleCrossrefRateLimit(response);
+
         if (err) {
           report.inc('general', 'crossref-fails');
           return reject(err);
