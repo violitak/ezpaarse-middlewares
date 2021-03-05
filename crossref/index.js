@@ -75,6 +75,11 @@ module.exports = function () {
   report.set('general', 'crossref-fails', 0);
   report.set('general', 'crossref-invalid-dois', 0);
 
+  let minResponseTime = -1;
+  let maxResponseTime = -1;
+  report.set('general', 'crossref-min-response-time', minResponseTime);
+  report.set('general', 'crossref-max-response-time', maxResponseTime);
+
   return new Promise(function (resolve, reject) {
     cache.checkIndexes(ttl, function (err) {
       if (err) {
@@ -318,10 +323,17 @@ module.exports = function () {
       // eslint-disable-next-line max-len
       self.logger.info(`Crossref: throttle changed from ${throttle}ms (${oldRate}q/s) to ${newThrottle}ms (${newRate}q/s)`);
       throttle = newThrottle;
-      const queriesPerSecond = Math.ceil((1000 / throttle) * 100) / 100;
-      self.logger.info(
-        `Crossref: limiting rate to ${queriesPerSecond} query/s (${throttle}ms throttle time)`
-      );
+    }
+  }
+
+  function handleResponseTime(responseTime) {
+    if (minResponseTime < 0 || responseTime < minResponseTime) {
+      minResponseTime = responseTime;
+      report.set('general', 'crossref-min-response-time', responseTime);
+    }
+    if (responseTime > maxResponseTime) {
+      maxResponseTime = responseTime;
+      report.set('general', 'crossref-max-response-time', responseTime);
     }
   }
 
@@ -335,6 +347,8 @@ module.exports = function () {
         headers['crossref-plus-api-token'] = `Bearer ${apiToken}`;
       }
 
+      const startTime = Date.now();
+
       request({
         method: 'GET',
         url: 'https://api.crossref.org/works',
@@ -347,6 +361,7 @@ module.exports = function () {
         }
       }, (err, response, body) => {
         handleCrossrefRateLimit(response);
+        handleResponseTime(Date.now() - startTime);
 
         if (err) {
           report.inc('general', 'crossref-fails');
