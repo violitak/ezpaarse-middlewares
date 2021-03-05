@@ -313,6 +313,10 @@ module.exports = function () {
     const newThrottle = Math.ceil((interval / nbRequests) * 1000);
 
     if (newThrottle !== throttle) {
+      const newRate = Math.ceil((1000 / newThrottle) * 100) / 100;
+      const oldRate = Math.ceil((1000 / throttle) * 100) / 100;
+      // eslint-disable-next-line max-len
+      self.logger.info(`Crossref: throttle changed from ${throttle}ms (${oldRate}q/s) to ${newThrottle}ms (${newRate}q/s)`);
       throttle = newThrottle;
       const queriesPerSecond = Math.ceil((1000 / throttle) * 100) / 100;
       self.logger.info(
