@@ -9,13 +9,20 @@ const doiPattern = /^10\.[0-9]{4,}\/[a-z0-9\-._: ;()/]+$/i;
  * Enrich ECs with crossref data
  */
 module.exports = function () {
-  const self           = this;
-  const req            = this.request;
-  const report         = this.report;
+  const self   = this;
+  const req    = this.request;
+  const report = this.report;
+
   const disabled       = /^false$/i.test(req.header('crossref-enrich'));
   const cacheEnabled   = !/^false$/i.test(req.header('crossref-cache'));
   const includeLicense = /^true$/i.test(req.header('crossref-license'));
-  const apiToken       = req.header('crossref-plus-api-token');
+
+  const apiToken = req.header('crossref-plus-api-token');
+  let etiquette = req.header('crossref-plus-api-token');
+
+  if (!etiquette) {
+    etiquette = 'ezPAARSE (https://ezpaarse.org; mailto:ezteam@couperin.org)';
+  }
 
   if (disabled) {
     self.logger.verbose('Crossref enrichment not activated');
@@ -341,7 +348,9 @@ module.exports = function () {
     report.inc('general', 'crossref-queries');
 
     return new Promise((resolve, reject) => {
-      const headers = {};
+      const headers = {
+        'user-agent': etiquette
+      };
 
       if (apiToken) {
         headers['crossref-plus-api-token'] = `Bearer ${apiToken}`;
