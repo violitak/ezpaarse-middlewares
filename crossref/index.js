@@ -37,7 +37,7 @@ module.exports = function () {
     if (!/^bearer /i.test(apiToken)) {
       apiToken = `Bearer ${apiToken}`;
     }
-    queryHeaders['crossref-plus-api-token'] = `Bearer ${apiToken}`;
+    queryHeaders['crossref-plus-api-token'] = apiToken;
   }
 
 
