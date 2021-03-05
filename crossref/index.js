@@ -23,14 +23,14 @@ module.exports = function () {
   }
 
   let apiToken = req.header('crossref-plus-api-token');
-  let etiquette = req.header('crossref-etiquette');
+  let userAgent = req.header('crossref-user-agent');
 
-  if (!etiquette) {
-    etiquette = 'ezPAARSE (https://ezpaarse.org; mailto:ezteam@couperin.org)';
+  if (!userAgent) {
+    userAgent = 'ezPAARSE (https://ezpaarse.org; mailto:ezteam@couperin.org)';
   }
 
   const queryHeaders = {
-    'user-agent': etiquette
+    'user-agent': userAgent
   };
 
   if (apiToken) {

@@ -15,7 +15,7 @@ Enriches consultation events with [crossref](http://search.crossref.org/) data f
 + **crossref-on-fail** : Strategy to adopt if an enrichment reaches the maximum number of attempts. Can be either of ``abort``, ``ignore`` or ``retry``. Defaults to ``abort``.
 + **crossref-base-wait-time** : Time to wait before retrying after a query fails, in milliseconds. Defaults to ``1000``ms. This time ``doubles`` after each attempt.
 + **crossref-plus-api-token** : If you signed up for the ``Plus`` service, put your token in this header.
-+ **crossref-etiquette** : Specify what to send in the `User-Agent` header when querying Crossref. Defaults to `ezPAARSE (https://ezpaarse.org; mailto:ezteam@couperin.org)`.
++ **crossref-user-agent** : Specify what to send in the `User-Agent` header when querying Crossref. Defaults to `ezPAARSE (https://ezpaarse.org; mailto:ezteam@couperin.org)`.
 
 ### Example :
 
