@@ -249,6 +249,7 @@ module.exports = function () {
             try {
               list = yield queryCrossref(identifier, Array.from(packet[identifier]));
             } catch (e) {
+              report.inc('general', 'crossref-fails');
               self.logger.error(`Crossref: ${e.message}`);
             }
 
@@ -377,14 +378,24 @@ module.exports = function () {
         handleResponseTime(Date.now() - startTime);
 
         if (err) {
-          report.inc('general', 'crossref-fails');
           return reject(err);
+        }
+
+        const status = response && response.statusCode;
+
+        if (!status) {
+          return reject(new Error('request failed with no status code'));
+        }
+        if (status === 401) {
+          return reject(new Error('authentication error (is the token valid?)'));
+        }
+        if (status >= 400) {
+          return reject(new Error(`request failed with status ${status}`));
         }
 
         const list = body && body.message && body.message.items;
 
         if (!Array.isArray(list)) {
-          report.inc('general', 'crossref-fails');
           return reject(new Error('got invalid response from the API'));
         }
 
