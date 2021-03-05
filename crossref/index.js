@@ -17,17 +17,29 @@ module.exports = function () {
   const cacheEnabled   = !/^false$/i.test(req.header('crossref-cache'));
   const includeLicense = /^true$/i.test(req.header('crossref-license'));
 
-  const apiToken = req.header('crossref-plus-api-token');
+  if (disabled) {
+    self.logger.verbose('Crossref enrichment not activated');
+    return function (ec, next) { next(); };
+  }
+
+  let apiToken = req.header('crossref-plus-api-token');
   let etiquette = req.header('crossref-etiquette');
 
   if (!etiquette) {
     etiquette = 'ezPAARSE (https://ezpaarse.org; mailto:ezteam@couperin.org)';
   }
 
-  if (disabled) {
-    self.logger.verbose('Crossref enrichment not activated');
-    return function (ec, next) { next(); };
+  const queryHeaders = {
+    'user-agent': etiquette
+  };
+
+  if (apiToken) {
+    if (!/^bearer /i.test(apiToken)) {
+      apiToken = `Bearer ${apiToken}`;
+    }
+    queryHeaders['crossref-plus-api-token'] = `Bearer ${apiToken}`;
   }
+
 
   self.logger.verbose('Crossref cache: %s', cacheEnabled ? 'enabled' : 'disabled');
 
@@ -348,21 +360,13 @@ module.exports = function () {
     report.inc('general', 'crossref-queries');
 
     return new Promise((resolve, reject) => {
-      const headers = {
-        'user-agent': etiquette
-      };
-
-      if (apiToken) {
-        headers['crossref-plus-api-token'] = `Bearer ${apiToken}`;
-      }
-
       const startTime = Date.now();
 
       request({
         method: 'GET',
         url: 'https://api.crossref.org/works',
         timeout: 60000,
-        headers,
+        headers: queryHeaders,
         json: true,
         qs: {
           filter: values.map(v => `${property}:${v}`).join(','),
