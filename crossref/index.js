@@ -18,7 +18,7 @@ module.exports = function () {
   const includeLicense = /^true$/i.test(req.header('crossref-license'));
 
   const apiToken = req.header('crossref-plus-api-token');
-  let etiquette = req.header('crossref-plus-api-token');
+  let etiquette = req.header('crossref-etiquette');
 
   if (!etiquette) {
     etiquette = 'ezPAARSE (https://ezpaarse.org; mailto:ezteam@couperin.org)';
