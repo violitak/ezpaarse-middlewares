@@ -443,19 +443,19 @@ module.exports = function () {
           ec['online_identifier'] = ec['online_identifier'] || issn.value;
         }
       });
-    } else if (Array.isArray(item['ISSN'])) {
-      if (item['ISSN'][0]) {
-        ec['print_identifier'] = ec['print_identifier'] || item['ISSN'][0];
-      }
-      if (item['ISSN'][1]) {
-        ec['online_identifier'] = ec['online_identifier'] || item['ISSN'][1];
-      }
+    }
+    if (Array.isArray(item['isbn-type'])) {
+      item['isbn-type'].forEach((isbn) => {
+        if (isbn.type === 'print') {
+          ec['print_identifier'] = ec['print_identifier'] || isbn.value;
+        } else if (isbn.type === 'electronic') {
+          ec['online_identifier'] = ec['online_identifier'] || isbn.value;
+        }
+      });
     }
 
     if (includeLicense && item['license']) {
       ec['license'] = JSON.stringify(item['license']);
     }
-
-    return item;
   }
 };
