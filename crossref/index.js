@@ -416,6 +416,8 @@ module.exports = function () {
   }
 
   function aggregate(item, ec) {
+    if (!item) { return; }
+
     if (Array.isArray(item['container-title'])) {
       ec['publication_title'] = ec['publication_title'] || item['container-title'][0];
     }
@@ -424,13 +426,13 @@ module.exports = function () {
     }
     ec['doi'] = ec['doi'] || item['DOI'];
     ec['publisher_name'] = ec['publisher_name'] || item['publisher'];
-    ec['type'] = item['type'];
+    ec['type'] = ec['type'] || item['type'];
 
     if (item['issued'] && item['issued']['date-parts'] && item['issued']['date-parts'][0]) {
       ec['publication_date'] = ec['publication_date'] || item['issued']['date-parts'][0][0];
     }
     if (item['subject'] && Array.isArray(item['subject'])) {
-      ec['subject'] = item['subject'].join(', ');
+      ec['subject'] = ec['subject'] || item['subject'].join(', ');
     }
 
     if (Array.isArray(item['issn-type'])) {
