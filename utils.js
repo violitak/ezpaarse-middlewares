@@ -84,7 +84,9 @@ exports.bufferedProcess = function (mw, options) {
 
     while (!fullPacket()) {
       const [ec, done] = buffer.shift() || [];
-      if (!ec) { return packet; }
+
+      if (!ec) { break; }
+
       if (typeof filter === 'function') {
         try {
           let keep = filter(ec);
