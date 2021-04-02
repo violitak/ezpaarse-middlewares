@@ -49,11 +49,11 @@ exports.bufferedProcess = function (mw, options) {
     buffer.push([ec, next]);
 
     if (buffer.length > bufferSize && !busy) {
-      busy = true;
+
       mw.saturate();
 
       drainBuffer().then(() => {
-        busy = false;
+
         mw.drain();
 
         if (typeof lastCallback === 'function') { lastCallback(); }
@@ -129,6 +129,8 @@ exports.bufferedProcess = function (mw, options) {
    * Create and process packets until the buffer size is low enough or there's nothing left
    */
   function drainBuffer () {
+    busy = true;
+
     return co(function* () {
       while (buffer.length >= bufferSize || (lastCallback && buffer.length > 0)) {
         const packet = yield getPacket();
@@ -137,6 +139,8 @@ exports.bufferedProcess = function (mw, options) {
           yield res;
         }
       }
+
+      busy = false;
     });
   }
 };
