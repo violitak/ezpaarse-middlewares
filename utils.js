@@ -29,6 +29,9 @@ exports.bufferedProcess = function (mw, options) {
   }
 
   return function process (ec, next) {
+    if (typeof lastCallback === 'function') {
+      this.logger.error('Received an EC after termination signal');
+    }
     if (!ec) {
       lastCallback = next;
 
