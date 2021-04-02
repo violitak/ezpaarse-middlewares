@@ -11,7 +11,7 @@ exports.bufferedProcess = function (mw, options) {
   let groupBy      = options.groupBy;
   let onPacket     = options.onPacket;
   let lastCallback = null;
-  let busy         = false;
+  let draining     = false;
   let buffer       = [];
 
   if (typeof groupBy === 'string') {
@@ -35,7 +35,7 @@ exports.bufferedProcess = function (mw, options) {
     if (!ec) {
       lastCallback = next;
 
-      if (!busy) {
+      if (!draining) {
         drainBuffer()
           .then(() => { lastCallback(); })
           .catch(err => {
@@ -48,7 +48,7 @@ exports.bufferedProcess = function (mw, options) {
 
     buffer.push([ec, next]);
 
-    if (buffer.length > bufferSize && !busy) {
+    if (buffer.length > bufferSize && !draining) {
 
       mw.saturate();
 
@@ -129,7 +129,7 @@ exports.bufferedProcess = function (mw, options) {
    * Create and process packets until the buffer size is low enough or there's nothing left
    */
   function drainBuffer () {
-    busy = true;
+    draining = true;
 
     return co(function* () {
       while (buffer.length >= bufferSize || (lastCallback && buffer.length > 0)) {
@@ -140,7 +140,7 @@ exports.bufferedProcess = function (mw, options) {
         }
       }
 
-      busy = false;
+      draining = false;
     });
   }
 };
