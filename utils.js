@@ -11,7 +11,7 @@ exports.bufferedProcess = function (mw, options) {
   let groupBy      = options.groupBy;
   let onPacket     = options.onPacket;
   let lastCallback = null;
-  let busy         = false;
+  let draining     = false;
   let buffer       = [];
 
   if (typeof groupBy === 'string') {
@@ -29,10 +29,13 @@ exports.bufferedProcess = function (mw, options) {
   }
 
   return function process (ec, next) {
+    if (typeof lastCallback === 'function') {
+      this.logger.error('Received an EC after termination signal');
+    }
     if (!ec) {
       lastCallback = next;
 
-      if (!busy) {
+      if (!draining) {
         drainBuffer()
           .then(() => { lastCallback(); })
           .catch(err => {
@@ -45,12 +48,12 @@ exports.bufferedProcess = function (mw, options) {
 
     buffer.push([ec, next]);
 
-    if (buffer.length > bufferSize && !busy) {
-      busy = true;
+    if (buffer.length > bufferSize && !draining) {
+
       mw.saturate();
 
       drainBuffer().then(() => {
-        busy = false;
+
         mw.drain();
 
         if (typeof lastCallback === 'function') { lastCallback(); }
@@ -81,7 +84,9 @@ exports.bufferedProcess = function (mw, options) {
 
     while (!fullPacket()) {
       const [ec, done] = buffer.shift() || [];
-      if (!ec) { return packet; }
+
+      if (!ec) { break; }
+
       if (typeof filter === 'function') {
         try {
           let keep = filter(ec);
@@ -124,6 +129,8 @@ exports.bufferedProcess = function (mw, options) {
    * Create and process packets until the buffer size is low enough or there's nothing left
    */
   function drainBuffer () {
+    draining = true;
+
     return co(function* () {
       while (buffer.length >= bufferSize || (lastCallback && buffer.length > 0)) {
         const packet = yield getPacket();
@@ -132,6 +139,8 @@ exports.bufferedProcess = function (mw, options) {
           yield res;
         }
       }
+
+      draining = false;
     });
   }
 };
