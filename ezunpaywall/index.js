@@ -7,6 +7,7 @@ const cache = ezpaarse.lib('cache')('ezunpaywall');
 
 // result field => ec field
 const enrichmentFields = {
+  'journal_name': 'publication_title',
   'is_oa': 'is_oa',
   'journal_is_in_doaj': 'journal_is_in_doaj',
   'journal_is_oa': 'journal_is_oa',
