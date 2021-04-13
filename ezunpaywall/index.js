@@ -161,7 +161,7 @@ module.exports = function () {
 
   /**
    * Request metadata from Unpaywall API for a given DOI
-   * @param {String} doi the doi to query
+   * @param {Array} dois the doi to query
    */
   function query(dois) {
     report.inc('general', 'ezunpaywall-queries');
@@ -173,7 +173,7 @@ module.exports = function () {
         json: true,
         body: {
           query: `{
-            getDatasUPW(dois:${JSON.stringify(dois)}) {
+            getDataUPW(dois:${JSON.stringify(dois)}) {
               ${graphqlFields.join(',')}
             }
           }`,
@@ -197,7 +197,7 @@ module.exports = function () {
           return reject(new Error(`${response.statusCode} ${response.statusMessage}`));
         }
 
-        const result = body && body.data && body.data.getDatasUPW;
+        const result = body && body.data && body.data.getDataUPW;
 
         if (!Array.isArray(result)) {
           return reject(new Error('invalid response'));
