@@ -32,13 +32,16 @@ module.exports = function () {
     }
 
     if (parsers.length === 0 && job.forceParser) {
-      // forceParser contains platform name parser to use
-      parsers.push(parserlist.getFromPlatform(job.forceParser));
-      this.logger.silly(`Parser found for platform ${job.forceParser}`);
+      const defaultParser = parserlist.getFromPlatform(job.forceParser);
+      this.logger.silly(`Looking for the default parser: ${job.forceParser}`);
+
+      if (defaultParser) {
+        parsers.push(defaultParser);
+      }
     }
 
     if (parsers.length === 0) {
-      this.logger.silly(`Parser not found for domain ${ec.domain}`);
+      this.logger.silly(`No parser found for the domain ${ec.domain}`);
 
       const err  = new Error('Parser not found');
       err.type = 'ENOPARSER';
