@@ -170,7 +170,7 @@ module.exports = function () {
     return new Promise((resolve, reject) => {
       const options = {
         method: 'POST',
-        uri: 'http://vdunpaywallmir.intra.inist.fr:8080/graphql',
+        uri: 'https://unpaywall.inist.fr/graphql',
         json: true,
         body: {
           query: `{
