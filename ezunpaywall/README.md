@@ -9,6 +9,7 @@ Experimental middleware that fetches metadata from the Unpaywall mirror hosted b
 + **ezunpaywall-throttle** : Minimum time to wait between queries, in milliseconds. Defaults to ``200``ms.
 + **ezunpaywall-paquet-size** : Maximum number of identifiers to send for query in a single request. Defaults to ``50``.
 + **ezunpaywall-buffer-size** : Maximum number of memorised access events before sending a request. Defaults to ``1000``.
++ **ezunpaywall-api-key** : apikey to use ezunpaywall.
 
 ### Example :
 

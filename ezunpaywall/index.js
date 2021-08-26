@@ -170,14 +170,17 @@ module.exports = function () {
     return new Promise((resolve, reject) => {
       const options = {
         method: 'POST',
-        uri: 'https://unpaywall.inist.fr/graphql',
+        uri: 'https://unpaywall.inist.fr/api/graphql',
         json: true,
         body: {
           query: `{
-            getDataUPW(dois:${JSON.stringify(dois)}) {
+            getByDOI(dois:${JSON.stringify(dois)}) {
               ${graphqlFields.join(',')}
             }
           }`,
+        },
+        headers: {
+          "x-api-key": req.header('ezunpaywall-api-key'),
         }
       };
 
