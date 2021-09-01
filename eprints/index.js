@@ -77,7 +77,7 @@ module.exports = function eprints() {
      * @returns {Boolean|Promise} true if the EC should be enriched, false otherwise
      */
     filter: ec => {
-
+      ec['domain'] = domainName;
       if (!ec.unitid) { return false; }
       const unitid = ec.unitid.split('/');
       if (!unitid.length) { return false; }
@@ -127,7 +127,13 @@ module.exports = function eprints() {
   function enrichEc(ec, result) {
     Object.entries(enrichmentFields).forEach(([field, ecField]) => {
       if (Object.hasOwnProperty.call(result, field)) {
-        ec[ecField] = result[field][0].replace(/(\r\n|\n|\r)/gm, ' ');
+        ec[ecField] = result[field][0].replace(/(\r\n|\n|\r)/gm, ' ').replace(/;/gm, '');
+        if (ecField === 'doi') {
+          let match;
+          if ((match = /^(http|https):\/\/(dx\.)?doi\.org\/(10\.[0-9]+)\/(.+)$/i.exec(result[field][0])) !== null) {
+            ec[ecField] = `${match[3]}/${match[4]}`;
+          }
+        }
       }
     });
   }
