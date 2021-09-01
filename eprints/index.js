@@ -127,14 +127,12 @@ module.exports = function eprints() {
   function enrichEc(ec, result) {
     Object.entries(enrichmentFields).forEach(([field, ecField]) => {
       if (Object.hasOwnProperty.call(result, field)) {
-        if (ecField==='doi') {
+        ec[ecField] = result[field][0].replace(/(\r\n|\n|\r)/gm, ' ').replace(/;/gm, '');
+        if (ecField === 'doi') {
           let match;
-          if ((match = /^(http|https):\/\/(dx\.)?doi\.org\/(10\.[0-9]+)\/([a-z0-9-._-]+)$/i.exec(result[field][0])) !== null) {
+          if ((match = /^(http|https):\/\/(dx\.)?doi\.org\/(10\.[0-9]+)\/(.+)$/i.exec(result[field][0])) !== null) {
             ec[ecField] = `${match[3]}/${match[4]}`;
           }
-        } else {
-          ec[ecField] = result[field][0].replace(/(\r\n|\n|\r)/gm, ' ').replace(/;/gm, '');
-
         }
       }
     });
