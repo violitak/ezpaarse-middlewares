@@ -1,0 +1,8 @@
+{
+  "headers": [
+    { "name": "host-chain-real-position" },
+    { "name": "host-chain-field" },
+    { "name": "host-chain-full-field" },
+    { "name": "host-chain-separator" }
+  ]
+}
