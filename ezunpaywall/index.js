@@ -174,7 +174,7 @@ module.exports = function () {
         json: true,
         body: {
           query: `{
-            getByDOI(dois:${JSON.stringify(dois)}) {
+            GetByDOI(dois:${JSON.stringify(dois)}) {
               ${graphqlFields.join(',')}
             }
           }`,
@@ -201,7 +201,7 @@ module.exports = function () {
           return reject(new Error(`${response.statusCode} ${response.statusMessage}`));
         }
 
-        const result = body && body.data && body.data.getDataUPW;
+        const result = body && body.data && body.data.GetByDOI;
 
         if (!Array.isArray(result)) {
           return reject(new Error('invalid response'));
