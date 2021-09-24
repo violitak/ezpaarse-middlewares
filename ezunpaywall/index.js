@@ -180,7 +180,7 @@ module.exports = function () {
           }`,
         },
         headers: {
-          "x-api-key": req.header('ezunpaywall-api-key'),
+          'x-api-key': req.header('ezunpaywall-api-key'),
         }
       };
 
