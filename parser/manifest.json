@@ -2,6 +2,9 @@
   "headers": [
     {
       "name": "filter-platforms"
+    },
+    {
+      "name": "allow-domain-wildcards"
     }
   ]
 }

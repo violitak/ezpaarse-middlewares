@@ -10,6 +10,7 @@ module.exports = function () {
   const job = this.job;
   const req = this.request;
   const filterString = req.header('filter-platforms');
+  const allowWildcards = /^true$/.test(req.header('allow-domain-wildcards'));
   let platformFilter;
 
   if (filterString) {
@@ -23,30 +24,40 @@ module.exports = function () {
   return function filter(ec, next) {
     if (!ec) { return next(); }
 
-    const subDomains = ec.domain.split('.'); // ['www', 'google', 'fr']
-    const domains = [ec.domain];
+    let parsers = parserlist.get(ec.domain);
 
-    for (let i = 1; i < subDomains.length - 1; i++) {
-      domains.push(`*.${subDomains.slice(i).join('.')}`); // *.google.fr
+    if (!parsers) {
+      parsers = [];
+    } else if (!Array.isArray(parsers)) {
+      parsers = [parsers];
     }
 
-    const parserSet = new Set();
+    if (allowWildcards) {
+      const subDomains = ec.domain.split('.'); // ['www', 'google', 'fr']
+      const domains = [];
 
-    domains
-      .map(domain => parserlist.get(domain))
-      .forEach(parserList => {
-        if (!parserList) { return; }
-        if (!Array.isArray(parserList)) {
-          parserList = [parserList];
-        }
-        parserList.forEach(parser => {
-          if (parser && parser.file) {
-            parserSet.add(parser);
+      for (let i = 1; i < subDomains.length - 1; i++) {
+        domains.push(`*.${subDomains.slice(i).join('.')}`); // *.google.fr
+      }
+
+      const parserSet = new Set();
+
+      domains
+        .map(domain => parserlist.get(domain))
+        .forEach(parserList => {
+          if (!parserList) { return; }
+          if (!Array.isArray(parserList)) {
+            parserList = [parserList];
           }
+          parserList.forEach(parser => {
+            if (parser && parser.file) {
+              parserSet.add(parser);
+            }
+          });
         });
-      });
 
-    let parsers = Array.from(parserSet);
+      parsers = parsers.concat(Array.from(parserSet));
+    }
 
     if (parsers.length === 0 && job.forceParser) {
       const defaultParser = parserlist.getFromPlatform(job.forceParser);
