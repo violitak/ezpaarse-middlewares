@@ -7,7 +7,7 @@ describe('labelize', () => {
     ezpaarse.config.EZPAARSE_LABELIZE = null;
   });
 
-  it('should enriched with labelize config', async () => {
+  it('should enriched with labelize config with 1 args', async () => {
     const ec = {
       email: "test.test@cnrs.fr"
     };
@@ -30,9 +30,10 @@ describe('labelize', () => {
     expect(ec).to.have.property('organization', 'cnrs');
   });
 
-  it('should enriched with labelize config', async () => {
+  it('should enriched with labelize config with 2 args', async () => {
     const ec = {
-      email: "test.test@cnrs.fr"
+      email: "test.test@cnrs.fr",
+      type: "random"
     };
 
     const config = [
@@ -42,8 +43,8 @@ describe('labelize', () => {
       },
 
       {
-        "if": { "field": "email", "value": "test.test" },
-        "set": { "field": "user", "value": "test.test" }
+        "if": { "field": "type", "value": "random" },
+        "set": { "field": "user", "value": "anonyme" }
       }
     ];
 
@@ -56,7 +57,31 @@ describe('labelize', () => {
 
     expect(ec).to.have.property('email', 'test.test@cnrs.fr');
     expect(ec).to.have.property('organization', 'cnrs');
-    expect(ec).to.have.property('user', 'test.test');
+    expect(ec).to.have.property('type', 'random');
+    expect(ec).to.have.property('user', 'anonyme');
+  });
+
+  it('should enriched with labelize config with 2 args', async () => {
+    const ec = {
+      email: "test.test@cnrs.fr",
+    };
+
+    const config = [
+      {
+        "if": { "field": "email", "value": "inist" },
+        "set": { "field": "organization", "value": "inist" }
+      },
+    ];
+
+    ezpaarse.config.EZPAARSE_LABELIZE = config;
+
+    const handle = await contextify(mw);
+    expect(handle).to.be.a('function');
+
+    handle(ec, () => { });
+
+    expect(ec).to.have.property('email', 'test.test@cnrs.fr');
+    expect(ec).to.have.property('organization', '');
   });
 
 

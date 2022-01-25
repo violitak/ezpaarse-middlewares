@@ -63,10 +63,11 @@ const labelize = function () {
       const sourceField = ec[label.if.field];
 
       const pattern = new RegExp(label.if.value, 'i')
-
+      const key = label.set.field
       if (pattern.test(sourceField)) {
-
-        ec[label.set.field] = label.set.value;
+        ec[key] = label.set.value;
+      } else {
+        ec[key] = '';
       }
     }
 
