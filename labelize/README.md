@@ -1,6 +1,6 @@
 # labelize
 
-
+This middleware allows you to add a field to based on the content of another field. To use it, you have to set the ezPAARSE config.
 ## Example
 
 ```json
