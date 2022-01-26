@@ -67,7 +67,7 @@ const labelize = function () {
       if (pattern.test(sourceField)) {
         ec[key] = label.set.value;
       } else {
-        ec[key] = '';
+        ec[key] = '';  
       }
     }
 
