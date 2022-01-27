@@ -4,7 +4,16 @@ const { expect } = require('chai');
 
 describe('labelize', () => {
   it('should be disabled', async () => {
-    ezpaarse.config.EZPAARSE_LABELIZE = null;
+    const ec = {
+      email: "test.test@cnrs.fr"
+    };
+
+    // TODO
+    // const handle = await contextify(mw);
+    // expect(handle).to.be.a('function');
+    // handle(ec, () => { });
+
+    expect(ec).to.have.property('email', 'test.test@cnrs.fr');
   });
 
   it('should enriched with labelize config with 1 args', async () => {

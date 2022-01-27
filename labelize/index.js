@@ -62,8 +62,6 @@ const labelize = function () {
 
     for (const label of customLabel) {
       const sourceField = ec[label.if.field];
-
-      console.log(label.if.field)
   
       if (!sourceField) {
         const err = new Error(`${sourceField} source not found`);
