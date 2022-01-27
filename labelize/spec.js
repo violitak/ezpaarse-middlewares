@@ -5,7 +5,7 @@ const { expect } = require('chai');
 describe('labelize', () => {
   it('should be disabled', async () => {
     const ec = {
-      email: "test.test@cnrs.fr"
+      domain: "test.test@cnrs.fr"
     };
 
     // TODO
@@ -13,18 +13,63 @@ describe('labelize', () => {
     // expect(handle).to.be.a('function');
     // handle(ec, () => { });
 
-    expect(ec).to.have.property('email', 'test.test@cnrs.fr');
+    expect(ec).to.have.property('domain', 'test.test@cnrs.fr');
   });
 
-  it('should enriched with labelize config with 1 args', async () => {
+  it('should enrich EC with result-field "organization" equal to "Dauphine"', async () => {
     const ec = {
-      email: "test.test@cnrs.fr"
+      domain: "dauphine.org"
     };
 
     const config = [
       {
-        "if": { "field": "email", "value": "cnrs" },
-        "set": { "field": "organization", "value": "cnrs" }
+        from: 'domain',
+        'result-field': 'organization',
+        mapping: {
+          'psl.fr': 'PSL',
+          'paristech.com': 'ParisTech',
+          'dauphine.org': 'Dauphine',
+          'paris-dauphine.org': 'Dauphine',
+        }
+      }
+    ]
+
+    ezpaarse.config.EZPAARSE_LABELIZE = config;
+
+    const handle = await contextify(mw);
+    expect(handle).to.be.a('function');
+
+    handle(ec, () => { });
+
+    expect(ec).to.have.property('domain', 'dauphine.org');
+    expect(ec).to.have.property('organization', 'Dauphine');
+  });
+
+  it('should enrich EC with result-field "organization" equal to "Dauphine" and "status" to "OK"', async () => {
+    const ec = {
+      domain: "dauphine.org",
+      code: "1"
+    };
+
+    const config = [
+      {
+        from: 'domain',
+        'result-field': 'organization',
+        mapping: {
+          'psl.fr': 'PSL',
+          'paristech.com': 'ParisTech',
+          'dauphine.org': 'Dauphine',
+          'paris-dauphine.org': 'Dauphine',
+        }
+      },
+      {
+        from: 'code',
+        'result-field': 'status',
+        mapping: {
+          '1': 'OK',
+          '2': 'OK',
+          '3': 'KO',
+        }
       }
     ];
 
@@ -35,27 +80,30 @@ describe('labelize', () => {
 
     handle(ec, () => { });
 
-    expect(ec).to.have.property('email', 'test.test@cnrs.fr');
-    expect(ec).to.have.property('organization', 'cnrs');
+    expect(ec).to.have.property('domain', 'dauphine.org');
+    expect(ec).to.have.property('organization', 'Dauphine');
+    expect(ec).to.have.property('code', '1');
+    expect(ec).to.have.property('status', 'OK');
   });
+  
 
-  it('should enriched with labelize config with 2 args', async () => {
+  it('should enrich EC with result-field "organization" equal to ""', async () => {
     const ec = {
-      email: "test.test@cnrs.fr",
-      type: "random"
+      domain: "cnrs.fr",
     };
 
     const config = [
       {
-        "if": { "field": "email", "value": "cnrs" },
-        "set": { "field": "organization", "value": "cnrs" }
-      },
-
-      {
-        "if": { "field": "type", "value": "random" },
-        "set": { "field": "user", "value": "anonyme" }
+        from: 'domain',
+        'result-field': 'organization',
+        mapping: {
+          'psl.fr': 'PSL',
+          'paristech.com': 'ParisTech',
+          'dauphine.org': 'Dauphine',
+          'paris-dauphine.org': 'Dauphine',
+        }
       }
-    ];
+    ]
 
     ezpaarse.config.EZPAARSE_LABELIZE = config;
 
@@ -64,125 +112,28 @@ describe('labelize', () => {
 
     handle(ec, () => { });
 
-    expect(ec).to.have.property('email', 'test.test@cnrs.fr');
-    expect(ec).to.have.property('organization', 'cnrs');
-    expect(ec).to.have.property('type', 'random');
-    expect(ec).to.have.property('user', 'anonyme');
-  });
-
-  it('should enriched with labelize config with 2 args', async () => {
-    const ec = {
-      email: "test.test@cnrs.fr",
-    };
-
-    const config = [
-      {
-        "if": { "field": "email", "value": "inist" },
-        "set": { "field": "organization", "value": "inist" }
-      },
-    ];
-
-    ezpaarse.config.EZPAARSE_LABELIZE = config;
-
-    const handle = await contextify(mw);
-    expect(handle).to.be.a('function');
-
-    handle(ec, () => { });
-
-    expect(ec).to.have.property('email', 'test.test@cnrs.fr');
+    expect(ec).to.have.property('domain', 'cnrs.fr');
     expect(ec).to.have.property('organization', '');
   });
 
 
-
   describe('Test error in configuration', async () => {
     it('should return HTTP status 400', async () => {
-      const config = {
-        "if": { "field": "email", "value": "cnrs" },
-        "set": { "field": "organization", "value": "cnrs" }
+      const ec = {
+        domain: "cnrs.fr",
       };
-
-      ezpaarse.config.EZPAARSE_LABELIZE = config;
-
-      const handle = await contextify(mw);
-      expect(handle).to.be.an('error').that.has.property('status', 400);
-    });
-
-    it('should return HTTP status 400', async () => {
+  
       const config = [
         {
-          "set": { "field": "organization", "value": "cnrs" }
+          'result-field': 'organization',
+          mapping: {
+            'psl.fr': 'PSL',
+            'paristech.com': 'ParisTech',
+            'dauphine.org': 'Dauphine',
+            'paris-dauphine.org': 'Dauphine',
+          }
         }
-      ];
-
-      ezpaarse.config.EZPAARSE_LABELIZE = config;
-
-      const handle = await contextify(mw);
-      expect(handle).to.be.an('error').that.has.property('status', 400);
-    });
-
-    it('should return HTTP status 400', async () => {
-      const config = [
-        {
-          "set": { "field": "organization" },
-          "if": { "field": "email", "value": "cnrs" }
-        }
-      ];
-
-      ezpaarse.config.EZPAARSE_LABELIZE = config;
-
-      const handle = await contextify(mw);
-      expect(handle).to.be.an('error').that.has.property('status', 400);
-    });
-
-    it('should return HTTP status 400', async () => {
-      const config = [
-        {
-          "set": { "value": "cnrs" },
-          "if": { "field": "email", "value": "cnrs" }
-        }
-      ];
-
-      ezpaarse.config.EZPAARSE_LABELIZE = config;
-
-      const handle = await contextify(mw);
-      expect(handle).to.be.an('error').that.has.property('status', 400);
-    });
-
-    it('should return HTTP status 400', async () => {
-      const config = [
-        {
-          "if": { "field": "email", "value": "cnrs" },
-        }
-      ];
-
-      ezpaarse.config.EZPAARSE_LABELIZE = config;
-
-      const handle = await contextify(mw);
-      expect(handle).to.be.an('error').that.has.property('status', 400);
-    });
-
-    it('should return HTTP status 400', async () => {
-      const config = [
-        {
-          "set": { "field": "organization", "value": "cnrs" },
-          "if": { "field": "email" },
-        }
-      ];
-
-      ezpaarse.config.EZPAARSE_LABELIZE = config;
-
-      const handle = await contextify(mw);
-      expect(handle).to.be.an('error').that.has.property('status', 400);
-    });
-
-    it('should return HTTP status 400', async () => {
-      const config = [
-        {
-          "set": { "field": "organization", "value": "cnrs" },
-          "if": { "value": "cnrs" },
-        }
-      ];
+      ]
 
       ezpaarse.config.EZPAARSE_LABELIZE = config;
 
@@ -192,23 +143,43 @@ describe('labelize', () => {
 
     it('should return HTTP status 400', async () => {
       const ec = {
-        email: "test.test@cnrs.fr",
+        domain: "cnrs.fr",
       };
   
-      const config = [{
-        "if": { "field": "user", "value": "cnrs" },
-        "set": { "field": "organization", "value": "cnrs" }
-      }];
+      const config = [
+        {
+          from: 'domain',
+          mapping: {
+            'psl.fr': 'PSL',
+            'paristech.com': 'ParisTech',
+            'dauphine.org': 'Dauphine',
+            'paris-dauphine.org': 'Dauphine',
+          }
+        }
+      ]
 
       ezpaarse.config.EZPAARSE_LABELIZE = config;
 
       const handle = await contextify(mw);
-      expect(handle).to.be.a('function');
+      expect(handle).to.be.an('error').that.has.property('status', 400);
+    });
 
-      handle(ec,  () => { });
+    it('should return HTTP status 400', async () => {
+      const ec = {
+        domain: "cnrs.fr",
+      };
   
-      expect(ec).to.have.property('email', 'test.test@cnrs.fr');
-      expect(ec).to.not.have.property('organization');
+      const config = [
+        {
+          from: 'domain',
+          'result-field': 'organization',
+        }
+      ]
+
+      ezpaarse.config.EZPAARSE_LABELIZE = config;
+
+      const handle = await contextify(mw);
+      expect(handle).to.be.an('error').that.has.property('status', 400);
     });
   });
 });

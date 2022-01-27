@@ -16,44 +16,24 @@ const labelize = function () {
   }
 
   for (const label of customLabel) {
-    if (!label.if) {
-      const err = new Error(`invalid labelize config: require "if" in ${label}`);
+    if (!label.from) {
+      const err = new Error(`invalid labelize config: require "from" in ${label}`);
       err.status = 400;
       return err;
     }
 
-    if (!label.set) {
-      const err = new Error(`invalid labelize config: require "set" in ${label}`);
+    if (!label['result-field']) {
+      const err = new Error(`invalid labelize config: require "result-field" in ${label}`);
       err.status = 400;
       return err;
     }
 
-    if (!label.if.field) {
-      const err = new Error(`invalid labelize config: require "if.field" in ${label}`);
-      err.status = 400;
-      return err;
-    }
-
-    if (!label.if.value) {
-      const err = new Error(`invalid labelize config: require "if.value" in ${label}`);
-      err.status = 400;
-      return err;
-    }
-
-    if (!label.set.field) {
-      const err = new Error(`invalid labelize config: require "set.field" in ${label}`);
-      err.status = 400;
-      return err;
-    }
-
-    if (!label.set.value) {
-      const err = new Error(`invalid labelize config: require "set.value" in ${label}`);
+    if (!label.mapping) {
+      const err = new Error(`invalid labelize config: require "mapping" in ${label}`);
       err.status = 400;
       return err;
     }
   }
-
-
 
   return function process(ec, next) {
     if (!ec) {
@@ -61,22 +41,19 @@ const labelize = function () {
     }
 
     for (const label of customLabel) {
-      const sourceField = ec[label.if.field];
-  
+      const { from, mapping } = label;
+      const field = label['result-field'];
+    
+      const sourceField = ec[from];
+
       if (!sourceField) {
-        const err = new Error(`${sourceField} source not found`);
+        const err = new Error(`field [${from}] not found`);
         return next(err);
       }
 
+      if (ec[field]) return;
 
-      const pattern = new RegExp(label.if.value, 'i')
-      const key = label.set.field
-  
-      if (pattern.test(sourceField)) {
-        ec[key] = label.set.value;
-      } else {
-        ec[key] = '';  
-      }
+      ec[field] = mapping[ec[from]] ? mapping[ec[from]] : '';
     }
 
     next();
