@@ -7,12 +7,12 @@ This middleware allows you to add a field to based on the content of another fie
 {
   "EZPAARSE_LABELIZE": [
     {
-       "if": { "field": "email", "value": "cnrs" },
-       "set": { "field": "organization", "value": "cnrs" }
+       "if": { "field": "email", "value": "@(inist|cnrs)\\.fr$" },
+       "set": { "field": "organization", "value": "CNRS" }
     },
     {
-       "if": { "field": "email", "value": "cnrs" },
-       "set": { "field": "organization", "value": "cnrs" }
+       "if": { "field": "publication_date", "value": "18[0-9]{2}" },
+       "set": { "field": "old", "value": "true" }
     }
   ]
 }

@@ -54,6 +54,7 @@ const labelize = function () {
   }
 
 
+
   return function process(ec, next) {
     if (!ec) {
       return next();
@@ -62,8 +63,17 @@ const labelize = function () {
     for (const label of customLabel) {
       const sourceField = ec[label.if.field];
 
+      console.log(label.if.field)
+  
+      if (!sourceField) {
+        const err = new Error(`${sourceField} source not found`);
+        return next(err);
+      }
+
+
       const pattern = new RegExp(label.if.value, 'i')
       const key = label.set.field
+  
       if (pattern.test(sourceField)) {
         ec[key] = label.set.value;
       } else {
