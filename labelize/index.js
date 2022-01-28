@@ -22,8 +22,8 @@ const labelize = function () {
       return err;
     }
 
-    if (!label['result-field']) {
-      const err = new Error(`invalid labelize config: require "result-field" in ${label}`);
+    if (!label.resultField) {
+      const err = new Error(`invalid labelize config: require "resultField" in ${label}`);
       err.status = 400;
       return err;
     }
@@ -35,6 +35,12 @@ const labelize = function () {
     }
   }
 
+  customLabel.forEach((label) => {
+    if (this.job.outputFields.added.indexOf(label.resultField) === -1) {
+      this.job.outputFields.added.push(label.resultField);
+    }
+  });
+
   return function process(ec, next) {
     if (!ec) {
       return next();
@@ -42,7 +48,7 @@ const labelize = function () {
 
     for (const label of customLabel) {
       const { from, mapping } = label;
-      const field = label['result-field'];
+      const field = label.resultField;
     
       const sourceField = ec[from];
 

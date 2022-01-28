@@ -16,7 +16,7 @@ describe('labelize', () => {
     expect(ec).to.have.property('domain', 'test.test@cnrs.fr');
   });
 
-  it('should enrich EC with result-field "organization" equal to "Dauphine"', async () => {
+  it('should enrich EC with resultField "organization" equal to "Dauphine"', async () => {
     const ec = {
       domain: "dauphine.org"
     };
@@ -24,7 +24,7 @@ describe('labelize', () => {
     const config = [
       {
         from: 'domain',
-        'result-field': 'organization',
+        'resultField': 'organization',
         mapping: {
           'psl.fr': 'PSL',
           'paristech.com': 'ParisTech',
@@ -45,7 +45,7 @@ describe('labelize', () => {
     expect(ec).to.have.property('organization', 'Dauphine');
   });
 
-  it('should enrich EC with result-field "organization" equal to "Dauphine" and "status" to "OK"', async () => {
+  it('should enrich EC with resultField "organization" equal to "Dauphine" and "status" to "OK"', async () => {
     const ec = {
       domain: "dauphine.org",
       code: "1"
@@ -54,7 +54,7 @@ describe('labelize', () => {
     const config = [
       {
         from: 'domain',
-        'result-field': 'organization',
+        'resultField': 'organization',
         mapping: {
           'psl.fr': 'PSL',
           'paristech.com': 'ParisTech',
@@ -64,7 +64,7 @@ describe('labelize', () => {
       },
       {
         from: 'code',
-        'result-field': 'status',
+        'resultField': 'status',
         mapping: {
           '1': 'OK',
           '2': 'OK',
@@ -87,7 +87,7 @@ describe('labelize', () => {
   });
   
 
-  it('should enrich EC with result-field "organization" equal to ""', async () => {
+  it('should enrich EC with resultField "organization" equal to ""', async () => {
     const ec = {
       domain: "cnrs.fr",
     };
@@ -95,7 +95,7 @@ describe('labelize', () => {
     const config = [
       {
         from: 'domain',
-        'result-field': 'organization',
+        'resultField': 'organization',
         mapping: {
           'psl.fr': 'PSL',
           'paristech.com': 'ParisTech',
@@ -125,7 +125,7 @@ describe('labelize', () => {
   
       const config = [
         {
-          'result-field': 'organization',
+          'resultField': 'organization',
           mapping: {
             'psl.fr': 'PSL',
             'paristech.com': 'ParisTech',
@@ -172,7 +172,7 @@ describe('labelize', () => {
       const config = [
         {
           from: 'domain',
-          'result-field': 'organization',
+          'resultField': 'organization',
         }
       ]
 
