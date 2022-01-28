@@ -8,6 +8,7 @@ This middleware allows you to add a field to based on the content of another fie
   "EZPAARSE_LABELIZE": [
     {
       "from": "domain",
+      "result-field": "organization",
       "mapping": {
         "psl.fr": "PSL",
         "paristech.com": "ParisTech",
@@ -17,6 +18,7 @@ This middleware allows you to add a field to based on the content of another fie
     },
     {
       "from": "code",
+      "result-field": "status",
       "mapping": {
         "200": true,
         "202": true,
