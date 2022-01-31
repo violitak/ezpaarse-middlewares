@@ -6,7 +6,7 @@ const labelize = function () {
   const customLabel = config.EZPAARSE_LABELIZE;
 
   if (!customLabel) {
-    return;
+    return function (ec, next) { next(); };
   }
 
   if (!Array.isArray(customLabel)) {
