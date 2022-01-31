@@ -49,19 +49,18 @@ const labelize = function () {
     }
 
     for (const label of customLabel) {
-      const { from, mapping } = label;
-      const field = label.resultField;
+      const { from, mapping, resultField } = label;
 
-      const sourceField = ec[from];
+      const sourceValue = ec[from];
 
-      if (!sourceField) {
+      if (!sourceValue) {
         const err = new Error(`field [${from}] not found`);
         return next(err);
       }
 
-      if (ec[field]) return;
-
-      ec[field] = mapping[ec[from]] ? mapping[ec[from]] : '';
+      if (sourceValue && !ec[resultField]) {
+        ec[resultField] = mapping[sourceValue];
+      }
     }
 
     next();

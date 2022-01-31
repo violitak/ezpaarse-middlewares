@@ -90,7 +90,7 @@ describe('labelize', () => {
   });
 
 
-  it('should enrich EC with resultField "organization" equal to ""', async () => {
+  it('should enrich EC with resultField "organization" equal to undefined', async () => {
     const ec = {
       domain: 'cnrs.fr',
     };
@@ -116,7 +116,7 @@ describe('labelize', () => {
     handle(ec, () => { });
 
     expect(ec).to.have.property('domain', 'cnrs.fr');
-    expect(ec).to.have.property('organization', '');
+    expect(ec).to.have.property('organization', undefined);
   });
 
 
