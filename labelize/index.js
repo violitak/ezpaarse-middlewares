@@ -1,3 +1,5 @@
+'use strict';
+
 const config = ezpaarse.config;
 
 const labelize = function () {
@@ -10,7 +12,7 @@ const labelize = function () {
   }
 
   if (!Array.isArray(customLabel)) {
-    const err = new Error(`invalid labelize config: EZPAARSE_LABELIZE need to be an array`);
+    const err = new Error('invalid labelize config: EZPAARSE_LABELIZE need to be an array');
     err.status = 400;
     return err;
   }
@@ -49,7 +51,7 @@ const labelize = function () {
     for (const label of customLabel) {
       const { from, mapping } = label;
       const field = label.resultField;
-    
+
       const sourceField = ec[from];
 
       if (!sourceField) {
@@ -63,7 +65,7 @@ const labelize = function () {
     }
 
     next();
-  }
+  };
 };
 
 module.exports = labelize;

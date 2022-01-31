@@ -1,3 +1,5 @@
+'use strict';
+
 const { contextify } = require('../mock');
 const mw = require('.');
 const { expect } = require('chai');
@@ -5,7 +7,7 @@ const { expect } = require('chai');
 describe('labelize', () => {
   it('should be disabled', async () => {
     const ec = {
-      domain: "test.test@cnrs.fr"
+      domain: 'test.test@cnrs.fr'
     };
 
     // TODO
@@ -18,7 +20,7 @@ describe('labelize', () => {
 
   it('should enrich EC with resultField "organization" equal to "Dauphine"', async () => {
     const ec = {
-      domain: "dauphine.org"
+      domain: 'dauphine.org'
     };
 
     const config = [
@@ -32,7 +34,7 @@ describe('labelize', () => {
           'paris-dauphine.org': 'Dauphine',
         }
       }
-    ]
+    ];
 
     ezpaarse.config.EZPAARSE_LABELIZE = config;
 
@@ -45,10 +47,11 @@ describe('labelize', () => {
     expect(ec).to.have.property('organization', 'Dauphine');
   });
 
+  // eslint-disable-next-line max-len
   it('should enrich EC with resultField "organization" equal to "Dauphine" and "status" to "OK"', async () => {
     const ec = {
-      domain: "dauphine.org",
-      code: "1"
+      domain: 'dauphine.org',
+      code: '1'
     };
 
     const config = [
@@ -85,11 +88,11 @@ describe('labelize', () => {
     expect(ec).to.have.property('code', '1');
     expect(ec).to.have.property('status', 'OK');
   });
-  
+
 
   it('should enrich EC with resultField "organization" equal to ""', async () => {
     const ec = {
-      domain: "cnrs.fr",
+      domain: 'cnrs.fr',
     };
 
     const config = [
@@ -103,7 +106,7 @@ describe('labelize', () => {
           'paris-dauphine.org': 'Dauphine',
         }
       }
-    ]
+    ];
 
     ezpaarse.config.EZPAARSE_LABELIZE = config;
 
@@ -119,10 +122,6 @@ describe('labelize', () => {
 
   describe('Test error in configuration', async () => {
     it('should return HTTP status 400', async () => {
-      const ec = {
-        domain: "cnrs.fr",
-      };
-  
       const config = [
         {
           'resultField': 'organization',
@@ -133,7 +132,7 @@ describe('labelize', () => {
             'paris-dauphine.org': 'Dauphine',
           }
         }
-      ]
+      ];
 
       ezpaarse.config.EZPAARSE_LABELIZE = config;
 
@@ -142,10 +141,6 @@ describe('labelize', () => {
     });
 
     it('should return HTTP status 400', async () => {
-      const ec = {
-        domain: "cnrs.fr",
-      };
-  
       const config = [
         {
           from: 'domain',
@@ -156,7 +151,7 @@ describe('labelize', () => {
             'paris-dauphine.org': 'Dauphine',
           }
         }
-      ]
+      ];
 
       ezpaarse.config.EZPAARSE_LABELIZE = config;
 
@@ -165,16 +160,12 @@ describe('labelize', () => {
     });
 
     it('should return HTTP status 400', async () => {
-      const ec = {
-        domain: "cnrs.fr",
-      };
-  
       const config = [
         {
           from: 'domain',
           'resultField': 'organization',
         }
-      ]
+      ];
 
       ezpaarse.config.EZPAARSE_LABELIZE = config;
 
