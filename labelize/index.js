@@ -53,11 +53,6 @@ const labelize = function () {
 
       const sourceValue = ec[from];
 
-      if (!sourceValue) {
-        const err = new Error(`field [${from}] not found`);
-        return next(err);
-      }
-
       if (sourceValue && !ec[resultField]) {
         ec[resultField] = mapping[sourceValue];
       }
