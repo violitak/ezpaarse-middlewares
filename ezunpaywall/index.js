@@ -59,6 +59,7 @@ module.exports = function () {
   report.set('general', 'ezunpaywall-queries', 0);
   report.set('general', 'ezunpaywall-query-fails', 0);
   report.set('general', 'ezunpaywall-cache-fails', 0);
+  report.set('general', 'ezunpaywall-doi-detected', 0);
 
   const process = bufferedProcess(this, {
     packetSize,
@@ -140,6 +141,7 @@ module.exports = function () {
       }
 
       if (doc) {
+        report.inc('general', 'ezunpaywall-doi-detected');
         enrichEc(ec, doc);
       }
 
