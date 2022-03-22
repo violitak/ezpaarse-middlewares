@@ -7,11 +7,11 @@ const cache = ezpaarse.lib('cache')('omeka');
 
 
 module.exports = function () {
-  this.logger.verbose('Initializing omeka middleware');
-
   const logger = this.logger;
   const report = this.report;
   const req = this.request;
+
+  logger.verbose('Initializing omeka middleware');
 
   const cacheEnabled = !/^false$/i.test(req.header('omeka-cache'));
 
@@ -21,6 +21,8 @@ module.exports = function () {
   let ttl = parseInt(req.header('omeka-ttl'));
   // Minimum wait time before each request (in ms)
   let throttle = parseInt(req.header('omeka-throttle'));
+
+  let baseUrl = req.header('omeka-baseUrl');
 
   if (isNaN(throttle)) { throttle = 100; }
   if (isNaN(ttl)) { ttl = 3600 * 24 * 7; }
@@ -43,11 +45,10 @@ module.exports = function () {
      */
     filter: ec => {
       if (!ec.ark) { return false; }
-      // TODO baseUrl
-      if (!ec.title_id) { return false; }
+      if (!ec.unitid) { return false; }
       if (!cacheEnabled) { return true; }
 
-      return findInCache(`${ec.title_id}/${ec.ark}`).then(cachedDoc => {
+      return findInCache(`${ec.unitid}/${ec.ark}`).then(cachedDoc => {
         if (cachedDoc) {
           enrichEc(ec, cachedDoc);
           return false;
@@ -78,10 +79,6 @@ module.exports = function () {
      */
   function* onPacket({ ecs }) {
     for (const [ec, done] of ecs) {
-
-
-      // TODO baseUrl
-      const baseUrl = ec.baseUrl;
       const ark = ec.title_id;
 
       const maxAttempts = 5;
@@ -137,7 +134,6 @@ module.exports = function () {
    */
   function query(baseUrl, ark) {
     report.inc('general', 'omeka-queries');
-
     return new Promise((resolve, reject) => {
       const options = {
         method: 'GET',
