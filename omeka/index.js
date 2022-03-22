@@ -46,7 +46,6 @@ module.exports = function () {
      * @returns {Boolean|Promise} true if the EC should be enriched, false otherwise
      */
     filter: ec => {
-      if (!ec.ark) { return false; }
       if (!ec.unitid) { return false; }
       if (!cacheEnabled) { return true; }
 
@@ -82,7 +81,12 @@ module.exports = function () {
   function* onPacket({ ecs }) {
     for (const [ec, done] of ecs) {
       const ark = ec.ark;
-      const id = ec.unitid;
+
+      let id;
+
+      if (!ark) {
+        id = ec.unitid;
+      }
 
       const maxAttempts = 5;
       let tries = 0;
@@ -110,7 +114,7 @@ module.exports = function () {
       } catch (e) {
         report.inc('omeka', 'omeka-cache-fails');
       }
-      if (doc) {
+      if (doc.element_texts) {
         enrichEc(ec, doc);
       }
 
@@ -124,9 +128,6 @@ module.exports = function () {
    * @param {Object} result the document used to enrich the EC
    */
   function enrichEc(ec, result) {
-    if (Array.isArray(result)) {
-      result = result[0];
-    }
     const title = result.element_texts.find((res) => {
       if (res.element.name === 'Title') return res.text;
     });
@@ -185,14 +186,13 @@ module.exports = function () {
           return reject(new Error(`${response.statusCode} ${response.statusMessage}`));
         }
 
-        if (!Array.isArray(body)) {
-          return reject(err);
+        if (Array.isArray(body)) {
+          body = body[0];
         }
 
-        resolve(body.map(result => {
-          result.oa_request_date = now.toISOString();
-          return result;
-        }));
+        body.oa_request_date = now.toISOString();
+
+        return resolve(body);
       });
     });
   }
