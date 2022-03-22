@@ -1,0 +1,8 @@
+{
+  "headers": [
+    { "name": "omeka-baseUrl" },
+    { "name": "omeka-cache" },
+    { "name": "omeka-ttl" },
+    { "name": "omeka-throttle" }
+  ]
+}
