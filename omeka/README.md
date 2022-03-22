@@ -1,7 +1,5 @@
 # omeka
 
-Experimental middleware that fetches metadata from the api omeka# omeka
-
 Experimental middleware that fetches metadata from the api omeka
 ## Headers
 
