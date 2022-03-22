@@ -45,10 +45,10 @@ module.exports = function () {
      */
     filter: ec => {
       if (!ec.ark) { return false; }
-      if (!ec.title_id) { return false; }
+      if (!ec.unitid) { return false; }
       if (!cacheEnabled) { return true; }
 
-      return findInCache(`${ec.title_id}/${ec.ark}`).then(cachedDoc => {
+      return findInCache(`${ec.unitid}/${ec.ark}`).then(cachedDoc => {
         if (cachedDoc) {
           enrichEc(ec, cachedDoc);
           return false;
@@ -159,7 +159,6 @@ module.exports = function () {
         }
 
         const result = body && body.data && body.data[0];
-        logger.info(result.body);
 
         resolve(result.map(result => {
           result['oa_request_date'] = now.toISOString();
