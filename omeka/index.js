@@ -11,11 +11,11 @@ module.exports = function () {
   const report = this.report;
   const req = this.request;
 
-  logger.verbose('Initializing omeka middleware');
+  logger.info('Initializing omeka middleware');
 
   const cacheEnabled = !/^false$/i.test(req.header('omeka-cache'));
 
-  logger.verbose(`Omeka cache: ${cacheEnabled ? 'enabled' : 'disabled'}`);
+  logger.info(`Omeka cache: ${cacheEnabled ? 'enabled' : 'disabled'}`);
 
   // Time-to-live of cached documents
   let ttl = parseInt(req.header('omeka-ttl'));
@@ -33,9 +33,11 @@ module.exports = function () {
     return err;
   }
 
-  report.set('general', 'omeka-queries', 0);
-  report.set('general', 'omeka-query-fails', 0);
-  report.set('general', 'omeka-cache-fails', 0);
+  report.set('omeka', 'omeka-queries', 0);
+  report.set('omeka', 'omeka-query-fails', 0);
+  report.set('omeka', 'omeka-cache-fails', 0);
+  report.set('omeka', 'omeka-count-ark', 0);
+  report.set('omeka', 'omeka-count-id', 0);
 
   const process = bufferedProcess(this, {
     /**
@@ -48,7 +50,7 @@ module.exports = function () {
       if (!ec.unitid) { return false; }
       if (!cacheEnabled) { return true; }
 
-      return findInCache(`${ec.unitid}/${ec.ark}`).then(cachedDoc => {
+      return findInCache(`${baseUrl}/${ec.ark || ec.unitid}`).then(cachedDoc => {
         if (cachedDoc) {
           enrichEc(ec, cachedDoc);
           return false;
@@ -79,7 +81,8 @@ module.exports = function () {
      */
   function* onPacket({ ecs }) {
     for (const [ec, done] of ecs) {
-      const ark = ec.title_id;
+      const ark = ec.ark;
+      const id = ec.unitid;
 
       const maxAttempts = 5;
       let tries = 0;
@@ -92,7 +95,7 @@ module.exports = function () {
         }
 
         try {
-          doc = yield query(baseUrl, ark);
+          doc = yield query(baseUrl, ark, id);
         } catch (e) {
           logger.error(`Omeka: ${e.message}`);
         }
@@ -103,11 +106,10 @@ module.exports = function () {
 
       try {
         // If we can't find a result for a given ID, we cache an empty document
-        yield cacheResult(`${baseUrl}/${ark}`, doc || {});
+        yield cacheResult(`${ec.unitid}/${ark || ec.unitid}`, doc || {});
       } catch (e) {
-        report.inc('general', 'omeka-cache-fails');
+        report.inc('omeka', 'omeka-cache-fails');
       }
-
       if (doc) {
         enrichEc(ec, doc);
       }
@@ -122,30 +124,55 @@ module.exports = function () {
    * @param {Object} result the document used to enrich the EC
    */
   function enrichEc(ec, result) {
-    ec['publication_title'] = result.element_text.filter((res) => {
+    if (Array.isArray(result)) {
+      result = result[0];
+    }
+    const title = result.element_texts.find((res) => {
       if (res.element.name === 'Title') return res.text;
     });
-    ec.type = result.type;
+    if (title) {
+      ec['publication_title'] = title.text;
+    }
   }
 
   /**
    * Request metadata from OMEKA API for a given ARK
    * @param {String} ark the ark to query
+   * @param {String} id the id to query
    */
-  function query(baseUrl, ark) {
-    report.inc('general', 'omeka-queries');
+  function query(baseUrl, ark, id) {
+    report.inc('omeka', 'omeka-queries');
     return new Promise((resolve, reject) => {
-      const options = {
+      let options = {
         method: 'GET',
-        uri: `${baseUrl}/api/items?search=${ark}`,
+        uri: `${baseUrl}/api/items/${id}`,
         json: true,
       };
+
+      if (ark) {
+        options = {
+          method: 'GET',
+          uri: `${baseUrl}/api/items`,
+          json: true,
+          qs: {
+            search: ark,
+          }
+        };
+        report.inc('omeka', 'omeka-count-ark');
+      } else {
+        report.inc('omeka', 'omeka-count-id');
+      }
+
 
       const now = new Date();
 
       request(options, (err, response, body) => {
+        if (!options) {
+          return reject(err);
+        }
+
         if (err) {
-          report.inc('general', 'omeka-query-fails');
+          report.inc('omeka', 'omeka-query-fails');
           return reject(err);
         }
 
@@ -154,14 +181,16 @@ module.exports = function () {
         }
 
         if (response.statusCode !== 200 && response.statusCode !== 304) {
-          report.inc('general', 'omeka-query-fails');
+          report.inc('omeka', 'omeka-query-fails');
           return reject(new Error(`${response.statusCode} ${response.statusMessage}`));
         }
 
-        const result = body && body.data && body.data[0];
+        if (!Array.isArray(body)) {
+          return reject(err);
+        }
 
-        resolve(result.map(result => {
-          result['oa_request_date'] = now.toISOString();
+        resolve(body.map(result => {
+          result.oa_request_date = now.toISOString();
           return result;
         }));
       });
