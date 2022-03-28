@@ -124,11 +124,11 @@ module.exports = function () {
 
       try {
         // If we can't find a result for a given ID, we cache an empty document
-        yield cacheResult(`${ec.unitid}/${ark || ec.unitid}`, doc || {});
+        yield cacheResult(`${baseUrl}/${ark || ec.unitid}`, doc || {});
       } catch (e) {
         report.inc('omeka', 'omeka-cache-fails');
       }
-      if (doc.element_texts) {
+      if (Array.isArray(doc.element_texts)) {
         enrichEc(ec, doc);
       }
 
@@ -143,7 +143,7 @@ module.exports = function () {
    */
   function enrichEc(ec, result) {
     const title = result.element_texts.find((res) => {
-      if (res.element.name === 'Title') return res.text;
+      return res && res.text && res.element && res.element.name === 'Title';
     });
     if (title) {
       ec['publication_title'] = title.text;
@@ -158,34 +158,19 @@ module.exports = function () {
   function query(baseUrl, ark, id) {
     report.inc('omeka', 'omeka-queries');
     return new Promise((resolve, reject) => {
-      let options = {
+      const options = {
         method: 'GET',
-        uri: `${baseUrl}/api/items/${id}`,
         json: true,
+        uri: ark ? `${baseUrl}/api/items` : `${baseUrl}/api/items/${id}`,
+        qs: ark ? { search: ark } : undefined
       };
-
       if (ark) {
-        options = {
-          method: 'GET',
-          uri: `${baseUrl}/api/items`,
-          json: true,
-          qs: {
-            search: ark,
-          }
-        };
         report.inc('omeka', 'omeka-count-ark');
       } else {
         report.inc('omeka', 'omeka-count-id');
       }
 
-
-      const now = new Date();
-
       request(options, (err, response, body) => {
-        if (!options) {
-          return reject(err);
-        }
-
         if (err) {
           report.inc('omeka', 'omeka-query-fails');
           return reject(err);
@@ -204,8 +189,6 @@ module.exports = function () {
           body = body[0];
         }
 
-        body.oa_request_date = now.toISOString();
-
         return resolve(body);
       });
     });
@@ -220,11 +203,7 @@ module.exports = function () {
     return new Promise((resolve, reject) => {
       if (!id || !item) { return resolve(); }
 
-      // The entire object can be pretty big
-      // We only cache what we need to limit memory usage
-      const cached = {};
-
-      cache.set(id, cached, (err, result) => {
+      cache.set(id, item, (err, result) => {
         if (err) { return reject(err); }
         resolve(result);
       });
