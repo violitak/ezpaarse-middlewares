@@ -5,6 +5,7 @@ const request = require('request');
 const { bufferedProcess, wait } = require('../utils.js');
 const cache = ezpaarse.lib('cache')('omeka');
 
+const platforms = require('./platforms.json');
 
 module.exports = function () {
   const logger = this.logger;
@@ -22,7 +23,20 @@ module.exports = function () {
   // Minimum wait time before each request (in ms)
   let throttle = parseInt(req.header('omeka-throttle'));
 
-  let baseUrl = req.header('omeka-baseUrl');
+  const platform = req.header('omeka-platform');
+  if (!platform) {
+    const err = new Error('Omeka: no platform are sent');
+    err.status = 500;
+    return err;
+  }
+
+  if (!platforms[platform]) {
+    const err = new Error(`Omeka: unrecognized platform [${platform}]`);
+    err.status = 500;
+    return err;
+  }
+
+  let baseUrl = platforms[platform];
 
   if (isNaN(throttle)) { throttle = 100; }
   if (isNaN(ttl)) { ttl = 3600 * 24 * 7; }
