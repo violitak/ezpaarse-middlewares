@@ -38,6 +38,8 @@ module.exports = function () {
 
   let baseUrl = platforms[platform];
 
+  let key = req.header('omeka-key');
+
   if (isNaN(throttle)) { throttle = 100; }
   if (isNaN(ttl)) { ttl = 3600 * 24 * 7; }
 
@@ -162,7 +164,7 @@ module.exports = function () {
         method: 'GET',
         json: true,
         uri: ark ? `${baseUrl}/api/items` : `${baseUrl}/api/items/${id}`,
-        qs: ark ? { search: ark } : undefined
+        qs: { ark: ark ? { search: ark } : undefined, key: key || undefined }
       };
       if (ark) {
         report.inc('omeka', 'omeka-count-ark');
