@@ -1,13 +1,13 @@
 {
-  "amiaf": "https://amiaf-imaf.cnrs.fr/",
-  "architoul": "https://architoul-msh-toulouse.cnrs.fr/",
-  "animal": "https://animal-representation.cnrs.fr/",
-  "cenhtor": "https://cenhtor-msh-lorraine.cnrs.fr/",
-  "corea": "https://ccj-corea.cnrs.fr/",
+  "amiaf": "https://amiaf-imaf.cnrs.fr",
+  "architoul": "https://architoul-msh-toulouse.cnrs.fr",
+  "animal": "https://animal-representation.cnrs.fr",
+  "cenhtor": "https://cenhtor-msh-lorraine.cnrs.fr",
+  "corea": "https://ccj-corea.cnrs.fr",
   "image": "https://image.hiscant.univ-lorraine.fr",
-  "pacea": "https://pacea-collections.inist.fr/",
-  "paleorient": "https://paleorient.cnrs.fr/",
-  "kaleidomed": "https://kaleidomed-mmsh.cnrs.fr/",
-  "revcoleurop": "https://revcoleurop.cnrs.fr/",
-  "statest": "https://statest.hiscant.univ-lorraine.fr/"
+  "pacea": "https://pacea-collections.inist.fr",
+  "paleorient": "https://paleorient.cnrs.fr",
+  "kaleidomed": "https://kaleidomed-mmsh.cnrs.fr",
+  "revcoleurop": "https://revcoleurop.cnrs.fr",
+  "statest": "https://statest.hiscant.univ-lorraine.fr"
 }

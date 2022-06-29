@@ -22,6 +22,10 @@ module.exports = function () {
   let ttl = parseInt(req.header('omeka-ttl'));
   // Minimum wait time before each request (in ms)
   let throttle = parseInt(req.header('omeka-throttle'));
+  // Maximum enrichment attempts
+  let maxTries = parseInt(req.header('omeka-max-tries'));
+  // Base wait time after a request fails
+  let baseWaitTime = parseInt(req.header('omeka-base-wait-time'));
 
   const platform = req.header('omeka-platform');
   if (!platform) {
@@ -40,6 +44,7 @@ module.exports = function () {
 
   let key = req.header('omeka-key');
 
+  if (isNaN(baseWaitTime)) { baseWaitTime = 1000; }
   if (isNaN(throttle)) { throttle = 100; }
   if (isNaN(ttl)) { ttl = 3600 * 24 * 7; }
 
@@ -97,20 +102,18 @@ module.exports = function () {
   function* onPacket({ ecs }) {
     for (const [ec, done] of ecs) {
       const ark = ec.ark;
-
       let id;
 
       if (!ark) {
         id = ec.unitid;
       }
 
-      const maxAttempts = 5;
       let tries = 0;
       let doc;
 
       while (!doc) {
-        if (++tries > maxAttempts) {
-          const err = new Error(`Failed to query API Omeka ${maxAttempts} times in a row`);
+        if (tries >= maxTries) {
+          const err = new Error(`Failed to query API Omeka ${maxTries} times in a row`);
           return Promise.reject(err);
         }
 
@@ -120,7 +123,9 @@ module.exports = function () {
           logger.error(`Omeka: ${e.message}`);
         }
 
-        yield wait(throttle);
+        yield wait(tries === 0 ? throttle : baseWaitTime * Math.pow(2, tries));
+
+        tries += 1;
       }
 
 
@@ -130,9 +135,8 @@ module.exports = function () {
       } catch (e) {
         report.inc('omeka', 'omeka-cache-fails');
       }
-      if (Array.isArray(doc.element_texts)) {
-        enrichEc(ec, doc);
-      }
+
+      enrichEc(ec, doc);
 
       done();
     }
@@ -144,11 +148,13 @@ module.exports = function () {
    * @param {Object} result the document used to enrich the EC
    */
   function enrichEc(ec, result) {
-    const title = result.element_texts.find((res) => {
-      return res && res.text && res.element && res.element.name === 'Title';
-    });
-    if (title) {
-      ec['publication_title'] = title.text;
+    if (result && Array.isArray(result.element_texts)) {
+      const title = result.element_texts.find((res) => {
+        return res && res.text && res.element && res.element.name === 'Title';
+      });
+      if (title) {
+        ec['publication_title'] = title.text;
+      }
     }
   }
 
@@ -159,13 +165,20 @@ module.exports = function () {
    */
   function query(baseUrl, ark, id) {
     report.inc('omeka', 'omeka-queries');
+    const qs = {};
+    if (ark) qs.search = ark;
+    if (key) qs.key = key;
+
     return new Promise((resolve, reject) => {
+
       const options = {
         method: 'GET',
         json: true,
         uri: ark ? `${baseUrl}/api/items` : `${baseUrl}/api/items/${id}`,
-        qs: { ark: ark ? { search: ark } : undefined, key: key || undefined }
+        qs
       };
+
+      logger.info(JSON.stringify(options, null, 2));
       if (ark) {
         report.inc('omeka', 'omeka-count-ark');
       } else {
@@ -187,9 +200,16 @@ module.exports = function () {
           return reject(new Error(`${response.statusCode} ${response.statusMessage}`));
         }
 
+
+
         if (Array.isArray(body)) {
-          body = body[0];
+          if (body.length !== 0) {
+            body = body[0];
+          } else {
+            return resolve({});
+          }
         }
+
 
         return resolve(body);
       });
