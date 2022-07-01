@@ -1,0 +1,10 @@
+{
+  "headers": [
+    { "name": "datacite-cache" },
+    { "name": "datacite-ttl" },
+    { "name": "datacite-throttle" },
+    { "name": "datacite-paquet-size" },
+    { "name": "datacite-buffer-size" },
+    { "name": "datacite-api-key" }
+  ]
+}
