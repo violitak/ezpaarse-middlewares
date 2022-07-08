@@ -197,6 +197,9 @@ module.exports = function () {
         }
 
         if (response.statusCode !== 200 && response.statusCode !== 304) {
+          if (body && body.message) {
+            logger.error(`Omeka: ${body.message}`);
+          }
           report.inc('omeka', 'omeka-query-fails');
           return reject(new Error(`${response.statusCode} ${response.statusMessage}`));
         }
