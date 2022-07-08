@@ -179,7 +179,6 @@ module.exports = function () {
         qs
       };
 
-      logger.info(JSON.stringify(options, null, 2));
       if (ark) {
         report.inc('omeka', 'omeka-count-ark');
       } else {
