@@ -45,6 +45,7 @@ module.exports = function () {
   let key = req.header('omeka-key');
 
   if (isNaN(baseWaitTime)) { baseWaitTime = 1000; }
+  if (isNaN(maxTries)) { maxTries = 5; }
   if (isNaN(throttle)) { throttle = 100; }
   if (isNaN(ttl)) { ttl = 3600 * 24 * 7; }
 
