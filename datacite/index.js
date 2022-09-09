@@ -133,10 +133,10 @@ module.exports = function () {
    * @param {Object} result the document used to enrich the EC
    */
   function enrichEc(ec, result) {
-    const titleData = result.attributes.titles.find((res) => {
-      return res && res.title;
-    });
+    const titles = result && result.attributes && result.attributes.titles;
+    if (!Array.isArray(titles)) { return; }
 
+    const titleData = titles.find((item) => (item && item.title));
     if (titleData) {
       ec['publication_title'] = titleData.title;
     }
