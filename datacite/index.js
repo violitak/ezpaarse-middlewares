@@ -53,7 +53,7 @@ module.exports = function () {
       if (!ec.doi) { return false; }
       if (!cacheEnabled) { return true; }
 
-      return findInCache(ec.doi).then(cachedDoc => {
+      return findInCache(ec.doi.toLowerCase()).then(cachedDoc => {
         if (cachedDoc) {
           enrichEc(ec, cachedDoc);
           return false;
@@ -107,14 +107,19 @@ module.exports = function () {
     }
 
     const doiResults = new Map();
-    docs.forEach(doc => doiResults.set(doc.id, doc));
+    docs.forEach(doc => {
+      if (doc && doc.doi) {
+        doiResults.set(doc.doi.toLowerCase(), doc);
+      }
+    });
 
     for (const [ec, done] of ecs) {
-      const doc = doiResults.get(ec.doi);
+      const doi = ec.doi.toLowerCase();
+      const doc = doiResults.get(doi);
 
       try {
         // If we can't find a result for a given ID, we cache an empty document
-        yield cacheResult(ec.doi, doc || {});
+        yield cacheResult(doi, doc || {});
       } catch (e) {
         report.inc('datacite', 'cache-fails');
       }
@@ -133,12 +138,17 @@ module.exports = function () {
    * @param {Object} result the document used to enrich the EC
    */
   function enrichEc(ec, result) {
-    const titles = result && result.attributes && result.attributes.titles;
-    if (!Array.isArray(titles)) { return; }
+    const doc = result || {};
 
-    const titleData = titles.find((item) => (item && item.title));
-    if (titleData) {
-      ec['publication_title'] = titleData.title;
+    if (doc.publisher) { ec['publisher_name'] = doc.publisher; }
+    if (doc.publicationYear) { ec['publication_date'] = doc.publicationYear; }
+
+    if (Array.isArray(doc.titles)) {
+      const titleData = doc.titles.find((item) => (item && item.title));
+
+      if (titleData) {
+        ec['publication_title'] = titleData.title;
+      }
     }
   }
 
@@ -151,9 +161,25 @@ module.exports = function () {
 
     return new Promise((resolve, reject) => {
       const options = {
-        method: 'GET',
-        uri: `https://api.datacite.org/dois?query=id:(${dois.join(' OR ')})&page[size]=${dois.length}`,
-        json: true
+        method: 'POST',
+        uri: 'https://api.datacite.org/graphql',
+        json: true,
+        body: {
+          query: `
+            query {
+              works(first:${dois.length},ids:${JSON.stringify(dois)}) {
+                nodes {
+                  doi,
+                  publicationYear,
+                  publisher,
+                  titles {
+                    title
+                  }
+                }
+              }
+            }
+          `
+        }
       };
 
       request(options, (err, response, body) => {
@@ -162,16 +188,12 @@ module.exports = function () {
           return reject(err);
         }
 
-        if (response.statusCode === 404) {
-          return resolve({});
-        }
-
-        if (response.statusCode !== 200 && response.statusCode !== 304) {
+        if (response.statusCode !== 200) {
           report.inc('datacite', 'query-fails');
           return reject(new Error(`${response.statusCode} ${response.statusMessage}`));
         }
 
-        const result = body && body.data;
+        const result = body && body.data && body.data.works && body.data.works.nodes;
 
         if (!Array.isArray(result)) {
           return reject(new Error('invalid response'));
