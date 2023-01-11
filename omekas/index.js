@@ -137,7 +137,7 @@ module.exports = function () {
    * @param {Object} result the document used to enrich the EC
    */
   function enrichEc(ec, result) {
-    if (result['o:title'])
+    if (result['o:title']) {
       ec['publication_title'] = result['o:title'];
     }
   }
