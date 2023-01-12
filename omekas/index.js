@@ -26,13 +26,13 @@ module.exports = function () {
   const platform = req.header('omekas-platform');
   if (!platform) {
     const err = new Error('Omekas: no platform are sent');
-    err.status = 500;
+    err.status = 400;
     return err;
   }
 
   if (!platforms[platform]) {
     const err = new Error(`Omekas: unrecognized platform [${platform}]`);
-    err.status = 500;
+    err.status = 400;
     return err;
   }
 
