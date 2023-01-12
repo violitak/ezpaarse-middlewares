@@ -125,10 +125,7 @@ module.exports = function () {
       } catch (e) {
         report.inc('omekas', 'omekas-cache-fails');
       }
-      if (Array.isArray(doc.element_texts)) {
-        enrichEc(ec, doc);
-      }
-
+      enrichEc(ec, doc);
       done();
     }
   }
@@ -139,8 +136,12 @@ module.exports = function () {
    * @param {Object} result the document used to enrich the EC
    */
   function enrichEc(ec, result) {
+    logger.info(result);
     if (result['o:title']) {
       ec['publication_title'] = result['o:title'];
+    }
+    if (result['dcterms:identifier'] && result['dcterms:identifier'].length > 0) {
+      ec['ark'] = result['dcterms:identifier'][0]['@value'] || '';
     }
   }
 
