@@ -1,0 +1,9 @@
+{
+  "headers": [
+    { "name": "omekas-platform" },
+    { "name": "omekas-key" },
+    { "name": "omekas-cache" },
+    { "name": "omekas-ttl" },
+    { "name": "omekas-throttle" }
+  ]
+}
