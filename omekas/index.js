@@ -64,7 +64,9 @@ module.exports = function () {
       if (!ec.unitid) { return false; }
       if (!cacheEnabled) { return true; }
 
-      return findInCache(`${baseUrl}/${ec.unitid}`).then(cachedDoc => {
+      let [ ,id] = ec.unitid.split('-');
+
+      return findInCache(`${baseUrl}/${id}`).then(cachedDoc => {
         if (cachedDoc) {
           enrichEc(ec, cachedDoc);
           return false;
@@ -95,7 +97,7 @@ module.exports = function () {
      */
   function* onPacket({ ecs }) {
     for (const [ec, done] of ecs) {
-      let id;
+      let [ ,id] = ec.unitid.split('-');
 
       const maxAttempts = 5;
       let tries = 0;
@@ -119,7 +121,7 @@ module.exports = function () {
 
       try {
         // If we can't find a result for a given ID, we cache an empty document
-        yield cacheResult(`${baseUrl}/${ec.unitid}`, doc || {});
+        yield cacheResult(`${baseUrl}/${id}`, doc || {});
       } catch (e) {
         report.inc('omekas', 'omekas-cache-fails');
       }
