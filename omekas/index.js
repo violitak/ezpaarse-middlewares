@@ -64,7 +64,7 @@ module.exports = function () {
       if (!ec.unitid) { return false; }
       if (!cacheEnabled) { return true; }
 
-      let [ ,id] = ec.unitid.split('-');
+      let [ , id] = ec.unitid.split('-');
 
       return findInCache(`${baseUrl}/${id}`).then(cachedDoc => {
         if (cachedDoc) {
@@ -97,7 +97,7 @@ module.exports = function () {
      */
   function* onPacket({ ecs }) {
     for (const [ec, done] of ecs) {
-      let [ ,id] = ec.unitid.split('-');
+      let [ , id] = ec.unitid.split('-');
 
       const maxAttempts = 5;
       let tries = 0;
