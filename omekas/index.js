@@ -22,8 +22,13 @@ module.exports = function () {
   let ttl = parseInt(req.header('omekas-ttl'));
   // Minimum wait time before each request (in ms)
   let throttle = parseInt(req.header('omekas-throttle'));
+  // Maximum enrichment attempts
+  let maxTries = parseInt(req.header('omeka-max-tries'));
+  // Base wait time after a request fails
+  let baseWaitTime = parseInt(req.header('omeka-base-wait-time'));
 
   const platform = req.header('omekas-platform');
+
   if (!platform) {
     const err = new Error('Omekas: no platform are sent');
     err.status = 400;
@@ -38,8 +43,11 @@ module.exports = function () {
 
   let baseUrl = platforms[platform];
 
-  let key = req.header('omekas-key');
+  const keyCredential = req.header('omekas-key-credential');
+  const keyIdentity = req.header('omekas-key-identity');
 
+  if (isNaN(baseWaitTime)) { baseWaitTime = 1000; }
+  if (isNaN(maxTries)) { maxTries = 5; }
   if (isNaN(throttle)) { throttle = 100; }
   if (isNaN(ttl)) { ttl = 3600 * 24 * 7; }
 
@@ -99,13 +107,12 @@ module.exports = function () {
     for (const [ec, done] of ecs) {
       let [ , id] = ec.unitid.split('-');
 
-      const maxAttempts = 5;
       let tries = 0;
       let doc;
 
       while (!doc) {
-        if (++tries > maxAttempts) {
-          const err = new Error(`Failed to query API Omekas ${maxAttempts} times in a row`);
+        if (++tries > maxTries) {
+          const err = new Error(`Failed to query API Omekas ${maxTries} times in a row`);
           return Promise.reject(err);
         }
 
@@ -115,7 +122,7 @@ module.exports = function () {
           logger.error(`Omekas: ${e.message}`);
         }
 
-        yield wait(throttle);
+        yield wait(tries === 0 ? throttle : baseWaitTime * Math.pow(2, tries));
       }
 
 
@@ -150,11 +157,20 @@ module.exports = function () {
    */
   function query(baseUrl, id) {
     report.inc('omekas', 'omekas-queries');
+
+    const qs = {};
+
+    if (keyCredential && keyIdentity) {
+      qs.key_identity = keyCredential;
+      qs.key_credential = keyIdentity;
+    }
+  
     return new Promise((resolve, reject) => {
       const options = {
         method: 'GET',
         json: true,
         uri: `${baseUrl}/api/items/${id}`,
+        qs
       };
       report.inc('omekas', 'omekas-count-id');
 
