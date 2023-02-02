@@ -43,8 +43,8 @@ module.exports = function () {
 
   let baseUrl = platforms[platform];
 
-  const key_credential = req.header('omekas-key-credential');
-  const key_identity = req.header('omekas-key-identity');
+  const keyCredential = req.header('omekas-key-credential');
+  const keyIdentity = req.header('omekas-key-identity');
 
   if (isNaN(baseWaitTime)) { baseWaitTime = 1000; }
   if (isNaN(maxTries)) { maxTries = 5; }
@@ -160,9 +160,9 @@ module.exports = function () {
 
     const qs = {};
 
-    if (key_credential && key_identity) {
-      qs.key_credential = key_credential;
-      qs.key_identity = key_identity;
+    if (keyCredential && keyIdentity) {
+      qs.key_identity = keyCredential;
+      qs.key_credential = keyIdentity;
     }
   
     return new Promise((resolve, reject) => {
