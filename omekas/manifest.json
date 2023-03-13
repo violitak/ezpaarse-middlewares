@@ -6,7 +6,7 @@
     { "name": "omekas-cache" },
     { "name": "omekas-ttl" },
     { "name": "omekas-throttle" },
-    { "name": "omeka-max-tries" },
-    { "name": "omeka-base-wait-time" }
+    { "name": "omekas-max-tries" },
+    { "name": "omekas-base-wait-time" }
   ]
 }
