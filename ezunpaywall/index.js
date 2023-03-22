@@ -28,7 +28,7 @@ module.exports = function () {
 
   const cacheEnabled = !/^false$/i.test(req.header('ezunpaywall-cache'));
 
-  logger.verbose(`Unpaywall cache: ${cacheEnabled ? 'enabled' : 'disabled'}`);
+  logger.verbose(`eznpaywall cache: ${cacheEnabled ? 'enabled' : 'disabled'}`);
 
   // Time-to-live of cached documents
   let ttl = parseInt(req.header('ezunpaywall-ttl'));
@@ -45,7 +45,7 @@ module.exports = function () {
   if (isNaN(ttl)) { ttl = 3600 * 24 * 7; }
 
   if (!cache) {
-    const err = new Error('failed to connect to mongodb, cache not available for Unpaywall');
+    const err = new Error('failed to connect to mongodb, cache not available for eznpaywall');
     err.status = 500;
     return err;
   }
@@ -89,8 +89,8 @@ module.exports = function () {
     // Verify cache indices and time-to-live before starting
     cache.checkIndexes(ttl, function (err) {
       if (err) {
-        logger.error(`Unpaywall: failed to verify indexes : ${err}`);
-        return reject(new Error('failed to verify indexes for the cache of Unpaywall'));
+        logger.error(`eznpaywall: failed to verify indexes : ${err}`);
+        return reject(new Error('failed to verify indexes for the cache of eznpaywall'));
       }
 
       resolve(process);
@@ -113,14 +113,14 @@ module.exports = function () {
 
     while (!docs) {
       if (++tries > maxAttempts) {
-        const err = new Error(`Failed to query Unpaywall ${maxAttempts} times in a row`);
+        const err = new Error(`Failed to query eznpaywall ${maxAttempts} times in a row`);
         return Promise.reject(err);
       }
 
       try {
         docs = yield query(dois);
       } catch (e) {
-        logger.error(`Unpaywall: ${e.message}`);
+        logger.error(`eznpaywall: ${e.message}`);
       }
 
       yield wait(throttle);
@@ -161,7 +161,7 @@ module.exports = function () {
   }
 
   /**
-   * Request metadata from Unpaywall API for a given DOI
+   * Request metadata from eznpaywall API for a given DOI
    * @param {Array} dois the doi to query
    */
   function query(dois) {
@@ -170,7 +170,7 @@ module.exports = function () {
     return new Promise((resolve, reject) => {
       const options = {
         method: 'POST',
-        uri: 'https://unpaywall.inist.fr/api/graphql',
+        uri: 'https://eznpaywall.inist.fr/api/graphql',
         json: true,
         body: {
           query: `{
