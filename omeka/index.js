@@ -175,7 +175,7 @@ module.exports = function () {
       const options = {
         method: 'GET',
         json: true,
-        uri: ark ? `${baseUrl}/api/items` : `${baseUrl}/api/items/${id}`,
+        uri: ark ? `${baseUrl}/api/items` : `${baseUrl}/api/items/${encodeURIComponent(id)}`,
         qs
       };
 
