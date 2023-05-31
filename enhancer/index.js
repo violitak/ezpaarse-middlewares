@@ -58,20 +58,20 @@ module.exports = function enhancer() {
       if (pending.size === 0 && finalCallback) { finalCallback(); }
     }
 
-    pkbs.findOne(query, { 'content': 1 }, function (err, entry) {
-      if (err) {
+    pkbs.findOne(query, { 'content': 1 })
+      .then((entry) => {
+        if (entry) {
+          const info = entry.content.json;
+          for (const prop in info) {
+            if (!ec[prop] && info[prop]) { ec[prop] = info[prop]; }
+          }
+        }
+
+        release();
+      })
+      .catch((err) => {
         report.inc('general', 'enhancement-errors');
         return release();
-      }
-
-      if (entry) {
-        const info = entry.content.json;
-        for (const prop in info) {
-          if (!ec[prop] && info[prop]) { ec[prop] = info[prop]; }
-        }
-      }
-
-      release();
-    });
+      });
   };
 };
