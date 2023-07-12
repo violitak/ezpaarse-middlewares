@@ -48,7 +48,7 @@ module.exports = function () {
   // Minimum number of ECs to keep before resolving them
   let bufferSize = parseInt(request.header('ncbi-buffer-size') || 1000);
   // Maximum enrichment attempts
-  let maxTries = parseInt(request.header('ncbi-max-tries')) || 1;
+  let maxTries = parseInt(request.header('ncbi-max-tries')) || 5;
   // Email associated with account for API calls
   const email = request.header('ncbi-email') || 'YOUR_EMAIL';
   // Tool associated with account for API calls
