@@ -1,6 +1,9 @@
 'use strict';
 
 exports.contextify = function (middleware, contextModifier) {
+
+  const report = {};
+
   let ctx = {
     request: {
       headers: {},
@@ -26,9 +29,21 @@ exports.contextify = function (middleware, contextModifier) {
       }
     },
     report: {
-      set() {},
-      get() {},
-      inc() {},
+      getJson() {
+        return report;
+      },
+      set(group, entry, value) {
+        if (!report[group]) { report[group] = {}; }
+        report[group][entry] = value;
+      },
+      get(group, entry) {
+        return report[group] && report[group][entry];
+      },
+      inc(group, entry) {
+        if (!report[group]) { report[group] = {}; }
+        var count = report[group][entry];
+        report[group][entry] = (typeof count === 'number') ? count + 1 : 1;
+      },
     },
     saturate () {},
     drain () {},
