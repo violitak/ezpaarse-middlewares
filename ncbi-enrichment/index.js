@@ -278,8 +278,8 @@ module.exports = function () {
     * @param {Object} result the document used to enrich the EC
     */
     function enrichEc(ec, result) {
-      ec.issn = result.issn;
-      ec.essn = result.essn;
+      ec.print_identifier = result.issn;
+      ec.online_identifier = result.essn;
       ec.publication_title = result.fulljournalname;
       ec.doi = result.doi;
       ec.title = result.title;
