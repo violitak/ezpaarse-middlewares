@@ -1,0 +1,12 @@
+{
+  "headers": [
+    { "name": "ncbi-cache" },
+    { "name": "ncbi-ttl" },
+    { "name": "ncbi-throttle" },
+    { "name": "ncbi-packet-size" },
+    { "name": "ncbi-buffer-size" },
+    { "name": "ncbi-max-tries" },
+    { "name": "ncbi-email" },
+    { "name": "ncbi-tool" }
+  ]
+}
