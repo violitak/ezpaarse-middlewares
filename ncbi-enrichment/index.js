@@ -225,7 +225,7 @@ module.exports = function () {
 
     // Pull the DOI, if available from the list of article ids
     let articleid = data[unitid].articleids.find(aid => aid.idtype === 'doi');
-    doc.doi = articleid.value ?? '';
+    doc.doi = articleid?.value ?? '';
 
     return doc;
   }
