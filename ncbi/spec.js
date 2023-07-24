@@ -107,7 +107,7 @@ const dataset = [
   },
 ];
 
-describe('ncbi-enrichment', function () {
+describe('ncbi', function () {
   this.timeout(10000);
 
   it('should correctly return doi and journal information', async () => {
@@ -139,7 +139,7 @@ describe('ncbi-enrichment', function () {
     const report = context.report.getJson();
     expect(report).to.have.property('ncbi');
     expect(report.ncbi).to.have.property('ncbi-queries').that.is.a('number').below(4)
-    expect(report.ncbi).to.have.property('ncbi-enriched-count', 10);
+    expect(report.ncbi).to.have.property('ncbi-count', 10);
     expect(report.ncbi).to.have.property('ncbi-query-fails', 0);
   });
 });
