@@ -31,3 +31,7 @@ curl -v -X POST http://localhost:59599
   -H "ezPAARSE-Middlewares: ncbi"
   -F "files[]=@access.log"
 ```
+
+### API Documentation
+
+https://www.ncbi.nlm.nih.gov/books/NBK25499/#chapter4.Release_Notes
