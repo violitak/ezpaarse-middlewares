@@ -3,7 +3,7 @@
 // Axios library used for API calls (requests is deprecated)
 const axios = require('axios');
 const co = require('co');
-const cache = ezpaarse.lib('cache')('ncbi-enrichment');
+const cache = ezpaarse.lib('cache')('ncbi');
 const { bufferedProcess, wait } = require('../utils.js');
 
 // Pubmed Ids contain only digits
@@ -41,8 +41,10 @@ module.exports = function () {
 
   // Time-to-live of cached documents
   let ttl = parseInt(request.header('ncbi-ttl')) || 3600 * 24 * 7;
+
+  const apikey = request.header('ncbi-apikey') || undefined;
   // Minimum wait time before each request (in ms)
-  let throttle = parseInt(request.header('ncbi-throttle')) || 500;
+  let throttle = parseInt(request.header('ncbi-throttle')) || apikey ? 100 : 500;
   // Maximum number of NCBI ids to query
   let packetSize = parseInt(request.header('ncbi-packet-size')) || 200;
   // Minimum number of ECs to keep before resolving them
@@ -50,13 +52,15 @@ module.exports = function () {
   // Maximum enrichment attempts
   let maxTries = parseInt(request.header('ncbi-max-tries')) || 5;
   // Email associated with account for API calls
-  const email = request.header('ncbi-email') || 'YOUR_EMAIL';
+  const email = ezpaarse.config.EZPAARSE_ADMIN_MAIL || request.header('ncbi-email') || 'YOUR_EMAIL';
   // Tool associated with account for API calls
-  const tool = request.header('ncbi-tool') || 'ezPAARSE';
+  const tool = request.header('ncbi-tool') || 'ezPAARSE (https://ezpaarse.org; mailto:ezteam@couperin.org)';
+  // Time-to-live of cached documents
+
 
   // Initialize output reports
   report.set('ncbi', 'ncbi-queries', 0);
-  report.set('ncbi', 'ncbi-enriched-count', 0);
+  report.set('ncbi', 'ncbi-count', 0);
   report.set('ncbi', 'ncbi-query-fails', 0);
   report.set('ncbi', 'ncbi-cache-fails', 0);
 
@@ -185,7 +189,7 @@ module.exports = function () {
       // Enrich the EC
       if (results.has(id)) {
         enrichEc(ec, results.get(id));
-        report.inc('ncbi', 'ncbi-enriched-count');
+        report.inc('ncbi', 'ncbi-count');
       }
       else {
         try {
@@ -253,6 +257,7 @@ module.exports = function () {
       email: email,
       tool: tool
     };
+    if (apikey) { params.api_key = apikey }
     return new Promise ((resolve, reject) => {
       // Query the NCBI eutils
       axios.get(baseURL, {params: params})
