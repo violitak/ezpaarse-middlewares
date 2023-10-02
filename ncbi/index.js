@@ -218,18 +218,22 @@ module.exports = function () {
     // Need to reinsert the PMC preface for the unit id
     // Store empty strings if values are not found
     doc.unitid = (db === 'pmc') ? 'PMC' + unitid :  unitid;
-    doc.issn = data[unitid].issn ?? '';
-    doc.essn = data[unitid].essn ?? '';
-    doc.fulljournalname = data[unitid].fulljournalname ?? '';
-    doc.shortjournalname = data[unitid].source ?? '';
-    doc.volume = data[unitid].volume ?? '';
-    doc.issue = data[unitid].issue ?? '';
-    doc.pages = data[unitid].pages ?? '';
-    doc.title = data[unitid].title ?? '';
+    doc.issn = data[unitid].issn || '';
+    doc.essn = data[unitid].essn || '';
+    doc.fulljournalname = data[unitid].fulljournalname || '';
+    doc.shortjournalname = data[unitid].source || '';
+    doc.volume = data[unitid].volume || '';
+    doc.issue = data[unitid].issue || '';
+    doc.pages = data[unitid].pages || '';
+    doc.title = data[unitid].title || '';
 
     // Pull the DOI, if available from the list of article ids
     let articleid = data[unitid].articleids.find(aid => aid.idtype === 'doi');
-    doc.doi = articleid?.value ?? '';
+
+    // new
+    if (articleid && articleid.value) {
+      doc.doi = articleid.value;
+    }
 
     return doc;
   }
