@@ -2,6 +2,7 @@
 
 const co         = require('co');
 const request    = require('request');
+const data       = require('./crossref-rtype.json'); // matching between ezPAARSE and Crossref types
 const cache      = ezpaarse.lib('cache')('crossref');
 const doiPattern = /^10\.[0-9]{4,}\/[a-z0-9\-._: ;()/]+$/i;
 
@@ -427,6 +428,7 @@ module.exports = function () {
     ec['doi'] = ec['doi'] || item['DOI'];
     ec['publisher_name'] = ec['publisher_name'] || item['publisher'];
     ec['type'] = ec['type'] || item['type'];
+    ec['rtype'] = ec['rtype'] || data[item['type']];
 
     if (item['issued'] && item['issued']['date-parts'] && item['issued']['date-parts'][0]) {
       ec['publication_date'] = ec['publication_date'] || item['issued']['date-parts'][0][0];
