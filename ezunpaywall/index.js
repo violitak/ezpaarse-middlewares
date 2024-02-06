@@ -24,7 +24,7 @@ module.exports = function () {
 
   const logger = this.logger;
   const report = this.report;
-  const req    = this.request;
+  const req = this.request;
 
   const cacheEnabled = !/^false$/i.test(req.header('ezunpaywall-cache'));
 
@@ -72,7 +72,6 @@ module.exports = function () {
     filter: ec => {
       if (!ec.doi) { return false; }
       if (!cacheEnabled) { return true; }
-
       return findInCache(ec.doi).then(cachedDoc => {
         if (cachedDoc) {
           enrichEc(ec, cachedDoc);
@@ -105,29 +104,40 @@ module.exports = function () {
   function* onPacket({ ecs }) {
     if (ecs.length === 0) { return; }
 
-    const dois = ecs.map(([ec, done]) => ec.doi);
+    const tmp = {};
+    ecs.forEach(([e]) => {
+      if (!tmp[e.date]) {
+        tmp[e.date] = [];
+      }
+      tmp[e.date].push(e.doi);
+    });
 
     const maxAttempts = 5;
     let tries = 0;
-    let docs;
-
-    while (!docs) {
-      if (++tries > maxAttempts) {
-        const err = new Error(`Failed to query ezunpaywall ${maxAttempts} times in a row`);
-        return Promise.reject(err);
-      }
-
-      try {
-        docs = yield query(dois);
-      } catch (e) {
-        logger.error(`ezunpaywall: ${e.message}`);
-      }
-
-      yield wait(throttle);
-    }
-
     const doiResults = new Map();
-    docs.forEach(doc => doiResults.set(doc.doi, doc));
+
+    for (const date in tmp) {
+      const dois = tmp[date];
+
+      let docs;
+
+      while (!docs) {
+        if (++tries > maxAttempts) {
+          const err = new Error(`Failed to query ezunpaywall ${maxAttempts} times in a row`);
+          return Promise.reject(err);
+        }
+
+        try {
+          docs = yield query(dois, date);
+        } catch (e) {
+          logger.error(`ezunpaywall: ${e.message}`);
+        }
+
+        yield wait(throttle);
+      }
+
+      docs.forEach(doc => doiResults.set(doc.doi, doc));
+    }
 
     for (const [ec, done] of ecs) {
       const doc = doiResults.get(ec.doi);
@@ -170,11 +180,12 @@ module.exports = function () {
     return new Promise((resolve, reject) => {
       const options = {
         method: 'POST',
-        uri: 'https://unpaywall.inist.fr/api/graphql',
+        // TMP
+        uri: 'http://vdunpaywall.intra.inist.fr:59700/api/graphql',
         json: true,
         body: {
           query: `{
-            GetByDOI(dois:${JSON.stringify(dois)}) {
+            unpaywallHistory(dois:${JSON.stringify(dois)}) {
               ${graphqlFields.join(',')}
             }
           }`,
@@ -201,7 +212,7 @@ module.exports = function () {
           return reject(new Error(`${response.statusCode} ${response.statusMessage}`));
         }
 
-        const result = body && body.data && body.data.GetByDOI;
+        const result = body && body.data && body.data.unpaywallHistory;
 
         if (!Array.isArray(result)) {
           return reject(new Error('invalid response'));
