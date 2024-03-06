@@ -5,6 +5,7 @@
     { "name": "ezunpaywall-throttle" },
     { "name": "ezunpaywall-paquet-size" },
     { "name": "ezunpaywall-buffer-size" },
-    { "name": "ezunpaywall-api-key" }
+    { "name": "ezunpaywall-api-key" },
+    { "name": "ezunpaywall-host" }
   ]
 }
