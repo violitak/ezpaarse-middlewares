@@ -12,6 +12,7 @@ Experimental middleware that fetches metadata from the Unpaywall mirror hosted b
 + **ezunpaywall-api-key** : apikey to use ezunpaywall.
 
 ## Enriched fields
+
 | Name | Type | Description |
 | --- | --- | --- |
 | is_oa | Boolean | Is there an OA copy of this resource. |
@@ -19,6 +20,7 @@ Experimental middleware that fetches metadata from the Unpaywall mirror hosted b
 | journal_is_oa | Boolean | Is this resource published in a completely OA journal. |
 | oa_status | String | The OA status, or color, of this resource. |
 | updated | String | Time when the data for this resource was last updated. |
+
 ### Example :
 
 ```bash
