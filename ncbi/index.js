@@ -9,7 +9,7 @@ const { bufferedProcess, wait } = require('../utils.js');
 // Pubmed Ids contain only digits
 const pubmedPattern = /^\d*$/i;
 // Pubmed Central Ids start with PMC then have digits
-const pmcPattern    = /^PMC(\d*)$/i;
+const pmcPattern = /^PMC(\d*)$/i;
 
 /**
 * Enrich ECs with NCBI data
@@ -17,8 +17,8 @@ const pmcPattern    = /^PMC(\d*)$/i;
 module.exports = function () {
 
   // Set references to this object
-  const logger  = this.logger;
-  const report  = this.report;
+  const logger = this.logger;
+  const report = this.report;
   const request = this.request;
 
   logger.verbose('Initializing NCBI enrichment');
@@ -54,7 +54,8 @@ module.exports = function () {
   // Email associated with account for API calls
   const email = ezpaarse.config.EZPAARSE_ADMIN_MAIL || request.header('ncbi-email') || 'YOUR_EMAIL';
   // Tool associated with account for API calls
-  const tool = request.header('ncbi-tool') || 'ezPAARSE (https://ezpaarse.org; mailto:ezteam@couperin.org)';
+  const tool =
+    request.header('ncbi-tool') || 'ezPAARSE (https://ezpaarse.org; mailto:ezteam@couperin.org)';
   // Time-to-live of cached documents
 
 
@@ -122,7 +123,7 @@ module.exports = function () {
     const dbs = Array.from(groupedECs.keys());
 
     // Place each EC into one of the database lists depending on the pattern.
-    for (const [ec, done] of ecs) {
+    for (const [ec] of ecs) {
       if (pubmedPattern.test(ec.unitid)) {
         groupedECs.get('pubmed').add(ec.unitid);
       }
@@ -131,7 +132,7 @@ module.exports = function () {
         let match = ec.unitid.match(pmcPattern);
         groupedECs.get('pmc').add(match[1]);
       }
-    };
+    }
 
     // Create a combined look up list
     let docs = [];
@@ -217,7 +218,7 @@ module.exports = function () {
     // Fill document values
     // Need to reinsert the PMC preface for the unit id
     // Store empty strings if values are not found
-    doc.unitid = (db === 'pmc') ? 'PMC' + unitid :  unitid;
+    doc.unitid = (db === 'pmc') ? 'PMC' + unitid : unitid;
     doc.issn = data[unitid].issn || '';
     doc.essn = data[unitid].essn || '';
     doc.fulljournalname = data[unitid].fulljournalname || '';
@@ -228,13 +229,16 @@ module.exports = function () {
     doc.title = data[unitid].title || '';
 
     // Pull the DOI, if available from the list of article ids
-    let articleid = data[unitid].articleids.find(aid => aid.idtype === 'doi');
 
+    let articleid;
+
+    if (Array.isArray(data[unitid].articleids)) {
+      articleid = data[unitid].articleids.find(aid => (aid && aid.idtype === 'doi'));
+    }
     // new
     if (articleid && articleid.value) {
       doc.doi = articleid.value;
     }
-
     return doc;
   }
 
@@ -261,81 +265,82 @@ module.exports = function () {
       email: email,
       tool: tool
     };
-    if (apikey) { params.api_key = apikey }
-    return new Promise ((resolve, reject) => {
+    if (apikey) { params.api_key = apikey; }
+    return new Promise((resolve, reject) => {
       // Query the NCBI eutils
-      axios.get(baseURL, {params: params})
-      .then(function (response) {
-        if (response.status != 200) {
+      axios.get(baseURL, { params: params })
+        .then(function (response) {
+          if (response.status != 200) {
+            report.inc('ncbi', 'ncbi-query-fails');
+            return reject(new Error('Unexpected Status Code: ' + response.statusCode));
+          }
+          let data = response.data.result;
+
+          // Return the list of documents
+          return resolve(data);
+        })
+        .catch(error => {
           report.inc('ncbi', 'ncbi-query-fails');
-          return reject(new Error('Unexpected Status Code: ' + response.statusCode));
-        }
-        let data = response.data.result;
-
-        // Return the list of documents
-        return resolve(data);
-      })
-      .catch(error => {
-        report.inc('ncbi', 'ncbi-query-fails');
-        return reject(error)});
-      });
-    }
-
-    /**
-    * Enrich an EC using the result of a query
-    * @param {Object} ec the EC to be enriched
-    * @param {Object} result the document used to enrich the EC
-    */
-    function enrichEc(ec, result) {
-      ec.print_identifier = result.issn;
-      ec.online_identifier = result.essn;
-      ec.publication_title = result.fulljournalname;
-      ec.doi = result.doi;
-      ec.title = result.title;
-    }
-
-    /**
-    * Cache an item with a given ID
-    * @param {String} id the ID of the item
-    * @param {Object} item the item to cache
-    */
-    function cacheResult(id, item) {
-      return new Promise((resolve, reject) => {
-        if (!id || !item) { return resolve(); }
-
-        // The entire object can be pretty big
-        // We only cache what we need to limit memory usage
-        const cached = {
-          unitid: item.unitid,
-          issn: item.issn,
-          essn: item.essn,
-          fulljournalname: item.fulljournalname,
-          shortjournalname: item.source,
-          volume: item.volume,
-          issue: item.issue,
-          pages: item.pages,
-          doi: item.doi
-        };
-
-        cache.set(id, cached, (err, result) => {
-          if (err) { return reject(err); }
-          resolve(result);
+          return reject(error);
         });
-      });
-    }
+    });
+  }
 
-    /**
-    * Find the item associated with a given ID in the cache
-    * @param {String} identifier the ID to find in the cache
-    */
-    function findInCache(identifier) {
-      return new Promise((resolve, reject) => {
-        if (!identifier) { return resolve(); }
+  /**
+  * Enrich an EC using the result of a query
+  * @param {Object} ec the EC to be enriched
+  * @param {Object} result the document used to enrich the EC
+  */
+  function enrichEc(ec, result) {
+    ec.print_identifier = result.issn;
+    ec.online_identifier = result.essn;
+    ec.publication_title = result.fulljournalname;
+    ec.doi = result.doi;
+    ec.title = result.title;
+  }
 
-        cache.get(identifier, (err, cachedDoc) => {
-          if (err) { return reject(err); }
-          resolve(cachedDoc);
-        });
+  /**
+  * Cache an item with a given ID
+  * @param {String} id the ID of the item
+  * @param {Object} item the item to cache
+  */
+  function cacheResult(id, item) {
+    return new Promise((resolve, reject) => {
+      if (!id || !item) { return resolve(); }
+
+      // The entire object can be pretty big
+      // We only cache what we need to limit memory usage
+      const cached = {
+        unitid: item.unitid,
+        issn: item.issn,
+        essn: item.essn,
+        fulljournalname: item.fulljournalname,
+        shortjournalname: item.source,
+        volume: item.volume,
+        issue: item.issue,
+        pages: item.pages,
+        doi: item.doi
+      };
+
+      cache.set(id, cached, (err, result) => {
+        if (err) { return reject(err); }
+        resolve(result);
       });
-    }
-  };
+    });
+  }
+
+  /**
+  * Find the item associated with a given ID in the cache
+  * @param {String} identifier the ID to find in the cache
+  */
+  function findInCache(identifier) {
+    return new Promise((resolve, reject) => {
+      if (!identifier) { return resolve(); }
+
+      cache.get(identifier, (err, cachedDoc) => {
+        if (err) { return reject(err); }
+        resolve(cachedDoc);
+      });
+    });
+  }
+};
