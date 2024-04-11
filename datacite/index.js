@@ -140,7 +140,7 @@ module.exports = function () {
   function enrichEc(ec, result) {
     const doc = result || {};
 
-    if (doc.publisher) { ec['publisher_name'] = doc.publisher; }
+    if (doc.publisher && doc.publisher.name) { ec['publisher_name'] = doc.publisher.name; }
     if (doc.publicationYear) { ec['publication_date'] = doc.publicationYear; }
 
     if (Array.isArray(doc.titles)) {
@@ -171,7 +171,9 @@ module.exports = function () {
                 nodes {
                   doi,
                   publicationYear,
-                  publisher,
+                  publisher {
+                    name
+                  },
                   titles {
                     title
                   }
