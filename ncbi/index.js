@@ -233,7 +233,7 @@ module.exports = function () {
     let articleid;
 
     if (Array.isArray(data[unitid].articleids)) {
-      articleid = data[unitid].articleids.find(aid => aid.idtype === 'doi');
+      articleid = data[unitid].articleids.find(aid => (aid && aid.idtype === 'doi'));
     }
     // new
     if (articleid && articleid.value) {
