@@ -232,7 +232,7 @@ module.exports = function () {
 
     let articleid;
 
-    if (data[unitid].articleids) {
+    if (Array.isArray(data[unitid].articleids)) {
       articleid = data[unitid].articleids.find(aid => aid.idtype === 'doi');
     }
     // new
