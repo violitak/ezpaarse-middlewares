@@ -28,7 +28,7 @@ module.exports = function throttler() {
   }
 
   return function throttle(ec, next) {
-    if (gap === 0 || !ec) { return next(); }
+    if (gap === 0) { return next(); }
 
     if (busy) {
       this.saturate();
