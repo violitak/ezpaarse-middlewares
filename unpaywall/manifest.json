@@ -1,6 +1,7 @@
 {
   "headers": [
     { "name": "unpaywall-enrich" },
+    { "name": "unpaywall-email" },
     { "name": "unpaywall-cache" },
     { "name": "unpaywall-license" },
     { "name": "unpaywall-ttl" },
