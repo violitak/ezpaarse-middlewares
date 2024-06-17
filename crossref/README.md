@@ -1,6 +1,30 @@
 # crossref
 
-Enriches consultation events with [crossref](http://search.crossref.org/) data from their [API](http://search.crossref.org/help/api)
+Middleware that fetches [crossref](http://search.crossref.org/) data from their [API](http://search.crossref.org/help/api).
+
+**This middleware is activated by default.**
+
+## Enriched fields
+
+| Name | Type | Description |
+| --- | --- | --- |
+| publication_title | String | Name of publication. |
+| title | String | Title of publication. |
+| type | String | type of document (journal-article, book-chapter, conference-paper, dissertation, report, dataset etc.) | 
+| rtype | String | Variation of type |
+| publication_date | String | Date of resource. |
+| publisher_name | String | Name of publisher. |
+| print_identifier | Number | ISBN or ISSN. | 
+| online_identifier | Number | EISBN or EISSN. | 
+| subject | String | subject, thematic of publication | 
+| doi | String | DOI of publication. | 
+| license | String | DOI of publication. | 
+
+## Prerequisites
+
+Your EC needs a DOI or alternative ID (any other identifier a publisher may have provided) for enrichment.
+
+**You must use crossref after filter, parser, deduplicator middleware.**
 
 ## Headers
 
@@ -15,12 +39,52 @@ Enriches consultation events with [crossref](http://search.crossref.org/) data f
 + **crossref-on-fail** : Strategy to adopt if an enrichment reaches the maximum number of attempts. Can be either of ``abort``, ``ignore`` or ``retry``. Defaults to ``abort``.
 + **crossref-base-wait-time** : Time to wait before retrying after a query fails, in milliseconds. Defaults to ``1000``ms. This time ``doubles`` after each attempt.
 + **crossref-plus-api-token** : If you signed up for the ``Plus`` service, put your token in this header.
-+ **crossref-user-agent** : Specify what to send in the `User-Agent` header when querying Crossref. Defaults to `ezPAARSE (https://ezpaarse.org; mailto:ezteam@couperin.org)`.
++ **crossref-user-agent** : Specify what to send in the `User-Agent` header when querying Crossref. Defaults to `ezPAARSE (https://readmetrics.org; mailto:ezteam@couperin.org)`.
 
-### Example :
+## How to use
+
+### ezPAARSE admin interface
+
+You can add crossref by default to all your enrichments, To do this, go to the middleware section of administration.
+
+![image](./docs/admin-interface.png)
+
+### ezPAARSE process interface
+
+You can use crossref for an enrichment process. You just add the middleware.
+
+![image](./docs/process-interface.png)
+
+### ezp
+
+You can use crossref for an enrichment process with [ezp](https://github.com/ezpaarse-project/node-ezpaarse) like this.
 
 ```bash
-curl -v -X POST http://localhost:59599
-  -H "ezPAARSE-Middlewares: crossref"
-  -F "files[]=@access.log"
+# enrich with one file
+
+ezp process <path of your file> \
+  --host <host of your ezPAARSE instance> \
+  --settings <settings-id> \
+  --header "ezPAARSE-Middlewares: crossref" \
+  --out ./result.csv
+
+# enrich with multiples files
+
+ezp bulk <path of your directory> \
+  --host <host of your ezPAARSE instance> \
+  --settings <settings-id> \
+  --header "ezPAARSE-Middlewares: crossref" 
+
+```
+
+### curl
+
+You can use crossref for an enrichment process with curl like this
+
+```bash
+curl -X POST -v http://localhost:59599 \
+  -H "ezPAARSE-Middlewares: crossref" \
+  -H "Log-Format-Ezproxy: <line format>" \
+  -F "file=@/<log file path>"
+
 ```
