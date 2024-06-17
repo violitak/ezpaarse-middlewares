@@ -6,14 +6,6 @@ Regulates the consultation events' stream by artificially adding time between ea
 
 + **Throttling** : Minimum time to wait between queries in milliseconds. Defaults to ``0``ms.
 
-### Example
-
-```bash
-curl -v -X POST http://localhost:59599
-  -H "ezPAARSE-Middlewares: throttler"
-  -F "files[]=@access.log"
-```
-
 ## How to use
 
 ### ezPAARSE config
