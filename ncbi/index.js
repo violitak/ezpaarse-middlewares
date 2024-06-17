@@ -55,7 +55,7 @@ module.exports = function () {
   const email = ezpaarse.config.EZPAARSE_ADMIN_MAIL || request.header('ncbi-email') || 'YOUR_EMAIL';
   // Tool associated with account for API calls
   const tool =
-    request.header('ncbi-tool') || 'ezPAARSE (https://ezpaarse.org; mailto:ezteam@couperin.org)';
+    request.header('ncbi-tool') || 'ezPAARSE (https://readmetrics.org; mailto:ezteam@couperin.org)';
   // Time-to-live of cached documents
 
 
@@ -265,7 +265,7 @@ module.exports = function () {
       email: email,
       tool: tool
     };
-    if (apikey) { params.api_key = apikey; }
+    if (apikey) { params['api_key'] = apikey; }
     return new Promise((resolve, reject) => {
       // Query the NCBI eutils
       axios.get(baseURL, { params: params })
@@ -292,9 +292,9 @@ module.exports = function () {
   * @param {Object} result the document used to enrich the EC
   */
   function enrichEc(ec, result) {
-    ec.print_identifier = result.issn;
-    ec.online_identifier = result.essn;
-    ec.publication_title = result.fulljournalname;
+    ec['print_identifier'] = result.issn;
+    ec['online_identifier'] = result.essn;
+    ec['publication_title'] = result.fulljournalname;
     ec.doi = result.doi;
     ec.title = result.title;
   }
