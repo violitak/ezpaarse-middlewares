@@ -29,6 +29,13 @@ Some platforms may have private resources, to obtain enrichments on these platfo
 
 ## How to use
 
+### ezPAARSE admin interface
+
+You can add omeka by default to all your enrichments, To do this, go to the middleware section of administration.
+
+![image](./docs/admin-interface.png)
+
+
 ### ezPAARSE process interface
 
 You can use omeka for an enrichment process. You just add the middleware.

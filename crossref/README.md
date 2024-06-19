@@ -26,6 +26,10 @@ Your EC needs a DOI or alternative ID (any other identifier a publisher may have
 
 **You must use crossref after filter, parser, deduplicator middleware.**
 
+## Recommendation
+
+You can use ezunpaywall with crossreft by placing it in front. This will save you processing time.
+
 ## Headers
 
 + **crossref-enrich** : Set to ``false`` to disable crossref enrichment. Enabled by default.

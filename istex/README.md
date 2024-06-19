@@ -42,6 +42,12 @@ You can add or remove istex by default to all your enrichments, To do this, go t
 
 ![image](./docs/admin-interface.png)
 
+### ezPAARSE process interface
+
+You can use istex for an enrichment process. You just add the middleware.
+
+![image](./docs/process-interface.png)
+
 ### ezp
 
 ```bash

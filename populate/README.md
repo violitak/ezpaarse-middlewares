@@ -19,6 +19,12 @@ Insert `website` into the field `portal`.
 Populate-Fields: { "portal": "website" }
 ```
 
+### ezPAARSE admin interface
+
+You can add or remove populate by default to all your enrichments, To do this, go to the middleware section of administration.
+
+![image](./docs/admin-interface.png)
+
 ### ezPAARSE process interface
 
 You can use populate for an enrichment process.
