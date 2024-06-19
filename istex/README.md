@@ -1,6 +1,6 @@
 # istex
 
-Middleware that fetches [istex](http://www.istex.fr/) data from their [API](https://api.istex.fr/documentation/).
+Fetches [istex](http://www.istex.fr/) data from their [API](https://api.istex.fr/documentation/).
 
 **This middleware is activated by default.**
 
@@ -46,7 +46,6 @@ You can add or remove istex by default to all your enrichments, To do this, go t
 
 ```bash
 # enrich with one file
-
 ezp process <path of your file> \
   --host <host of your ezPAARSE instance> \
   --settings <settings-id> \
@@ -54,7 +53,6 @@ ezp process <path of your file> \
   --out ./result.csv
 
 # enrich with multiples files
-
 ezp bulk <path of your directory> \
   --host <host of your ezPAARSE instance> \
   --settings <settings-id> \
@@ -64,12 +62,12 @@ ezp bulk <path of your directory> \
 
 ### curl
 
-You can use istex for an enrichment process with curl like this
+You can use istex for an enrichment process with curl like this:
 
 ```bash
 curl -X POST -v http://localhost:59599 \
   -H "ezPAARSE-Middlewares: istex" \
   -H "Log-Format-Ezproxy: <line format>" \
-  -F "file=@/<log file path>"
+  -F "file=@<log file path>"
 
 ```

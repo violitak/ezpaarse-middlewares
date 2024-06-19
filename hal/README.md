@@ -1,6 +1,6 @@
 # hal
 
-Middleware that fetches [HAL](https://hal.archives-ouvertes.fr/) data from their [API](https://api.archives-ouvertes.fr/docs/search)
+Fetches [HAL](https://hal.archives-ouvertes.fr/) data from their [API](https://api.archives-ouvertes.fr/docs/search)
 
 **This middleware is activated by default.**
 
@@ -53,7 +53,6 @@ You can use hel for an enrichment process. You just add the middleware.
 
 ```bash
 # enrich with one file
-
 ezp process <path of your file> \
   --host <host of your ezPAARSE instance> \
   --settings <settings-id> \
@@ -61,7 +60,6 @@ ezp process <path of your file> \
   --out ./result.csv
 
 # enrich with multiples files
-
 ezp bulk <path of your directory> \
   --host <host of your ezPAARSE instance> \
   --settings <settings-id> \
@@ -71,12 +69,12 @@ ezp bulk <path of your directory> \
 
 ### curl
 
-You can use hal for an enrichment process with curl like this
+You can use hal for an enrichment process with curl like this:
 
 ```bash
 curl -X POST -v http://localhost:59599 \
   -H "ezPAARSE-Middlewares: hal" \
   -H "Log-Format-Ezproxy: <line format>" \
-  -F "file=@/<log file path>"
+  -F "file=@<log file path>"
 
 ```

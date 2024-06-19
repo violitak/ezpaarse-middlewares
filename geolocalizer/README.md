@@ -1,6 +1,6 @@
 # geocalizer
 
-Middleware that geolocalize consultation events based on an IP address.
+Geolocalize consultation events based on an IP address.
 
 **This middleware is activated by default.**
 
@@ -36,11 +36,10 @@ You can use geolocalizer for an enrichment process. You just add the middleware.
 
 ### ezp
 
-You can use geolocalizer for an enrichment process with [ezp](https://github.com/ezpaarse-project/node-ezpaarse) like this.
+You can use geolocalizer for an enrichment process with [ezp](https://github.com/ezpaarse-project/node-ezpaarse) like this:
 
 ```bash
 # enrich with one file
-
 ezp process <path of your file> \
   --host <host of your ezPAARSE instance> \
   --settings <settings-id> \
@@ -49,7 +48,6 @@ ezp process <path of your file> \
   --out ./result.csv
 
 # enrich with multiples files
-
 ezp bulk <path of your directory> \
   --host <host of your ezPAARSE instance> \
   --settings <settings-id> \
@@ -60,14 +58,14 @@ ezp bulk <path of your directory> \
 
 ### curl
 
-You can use geolocalizer for an enrichment process with curl like this
+You can use geolocalizer for an enrichment process with curl like this:
 
 ```bash
 curl -X POST -v http://localhost:59599 \
   -H "ezPAARSE-Middlewares: geolocalizer" \
   -H "Geoip: all" \
   -H "Log-Format-Ezproxy: <line format>" \
-  -F "file=@/<log file path>"
+  -F "file=@<log file path>"
 
 ```
 

@@ -1,6 +1,6 @@
 # eprints
 
-Middleware that fetches data from eprints platforms.
+Fetches data from eprints platforms.
 This middleware was designed to measure only the logs of eprint platforms.
 
 ## Enriched fields
@@ -45,11 +45,10 @@ You can use eprints for an enrichment process. You just add the middleware.
 
 ### ezp
 
-You can use eprints for an enrichment process with [ezp](https://github.com/ezpaarse-project/node-ezpaarse) like this.
+You can use eprints for an enrichment process with [ezp](https://github.com/ezpaarse-project/node-ezpaarse) like this:
 
 ```bash
 # enrich with one file
-
 ezp process <path of your file> \
   --host <host of your ezPAARSE instance> \
   --settings <settings-id> \
@@ -58,7 +57,6 @@ ezp process <path of your file> \
   --out ./result.csv
 
 # enrich with multiples files
-
 ezp bulk <path of your directory> \
   --host <host of your ezPAARSE instance> \
   --settings <settings-id> \
@@ -69,13 +67,13 @@ ezp bulk <path of your directory> \
 
 ### curl
 
-You can use eprints for an enrichment process with curl like this
+You can use eprints for an enrichment process with curl like this:
 
 ```bash
 curl -X POST -v http://localhost:59599 \
   -H "ezPAARSE-Middlewares: eprints" \
   -H "eprints-domain-name: <host of eprints platform>" \
   -H "Log-Format-Ezproxy: <line format>" \
-  -F "file=@/<log file path>"
+  -F "file=@<log file path>"
 
 ```

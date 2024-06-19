@@ -1,6 +1,6 @@
 # ezunpaywall
 
-Middleware that fetches [unpaywall](https://www.unpaywall.org/) metadata from [ezunpaywall](https://unpaywall.inist.fr/), the Unpaywall mirror hosted by the Inist-CNRS. this data are uses to enrich EC.
+Fetches [unpaywall](https://www.unpaywall.org/) metadata from [ezunpaywall](https://unpaywall.inist.fr/), the Unpaywall mirror hosted by the Inist-CNRS. this data are uses to enrich EC.
 
 ## Enriched fields
 
@@ -59,11 +59,10 @@ You can use ezunpaywall for an enrichment process. You just add the middleware a
 
 ### ezp
 
-You can use ezunpaywall for an enrichment process with [ezp](https://github.com/ezpaarse-project/node-ezpaarse) like this.
+You can use ezunpaywall for an enrichment process with [ezp](https://github.com/ezpaarse-project/node-ezpaarse) like this:
 
 ```bash
 # enrich with one file
-
 ezp process <path of your file> \
   --host <host of your ezPAARSE instance> \
   --settings <settings-id> \
@@ -72,7 +71,6 @@ ezp process <path of your file> \
   --out ./result.csv
 
 # enrich with multiples files
-
 ezp bulk <path of your directory> \
   --host <host of your ezPAARSE instance> \
   --settings <settings-id> \
@@ -83,13 +81,13 @@ ezp bulk <path of your directory> \
 
 ### curl
 
-You can use ezunpaywall for an enrichment process with curl like this
+You can use ezunpaywall for an enrichment process with curl like this:
 
 ```bash
 curl -X POST -v http://localhost:59599 \
   -H "ezPAARSE-Middlewares: ezunpaywall" \
   -H "ezunpaywall-api-key: <ezunpaywall apikey>" \
   -H "Log-Format-Ezproxy: <line format>" \
-  -F "file=@/<log file path>"
+  -F "file=@<log file path>"
 
 ```
