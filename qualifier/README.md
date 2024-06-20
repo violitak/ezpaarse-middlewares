@@ -1,6 +1,6 @@
 # qualifier
 
-Checks consultation events' qualification. See the [dedicated page](../features/qualification.html) for more detail.
+Checks consultation events' qualification. See the [dedicated page](../../features/qualification.html) for more detail.
 
 **This middleware is activated by default.**
 
