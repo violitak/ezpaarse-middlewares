@@ -27,7 +27,7 @@ module.exports = function () {
   let userAgent = req.header('crossref-user-agent');
 
   if (!userAgent) {
-    userAgent = 'ezPAARSE (https://ezpaarse.org; mailto:ezteam@couperin.org)';
+    userAgent = 'ezPAARSE (https://readmetrics.org; mailto:ezteam@couperin.org)';
   }
 
   const queryHeaders = {

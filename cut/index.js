@@ -8,7 +8,10 @@ module.exports = function () {
 
   if (!header) { return (ec, next) => next(); }
 
-  const params = /^(.+?)=>(.+?)=>(.+?)$/.exec(header); // field=>regex=>a,b,c  host: 127.0.0.1/16=>([0-9]+)\/([0-9]+)=>host,aze  host: 127.0.0.1/16=>split(\/)=>host,aze
+  // field=>regex=>a,b,c
+  // host: 127.0.0.1/16=>([0-9]+)\/([0-9]+)=>host,aze
+  // host: 127.0.0.1/16=>split(\/)=>host,aze
+  const params = /^(.+?)=>(.+?)=>(.+?)$/.exec(header);
 
   if (!params) {
     const err = new Error('Invalid extract expression');
