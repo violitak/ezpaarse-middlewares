@@ -2,6 +2,8 @@
 
 Generates a file (``robots.json``) which contains a list of trackcodes that have done N lookups and appear to be robots.
 
+**This middleware is file-like and does not enrich ECs**.
+
 ## Headers
 
 + **robots-ttl** : Lifetime of cached documents, in seconds. Defaults to ``1 day (3600 * 24)``.

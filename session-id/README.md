@@ -25,7 +25,7 @@ Examples of generated session IDs :
 
 ## Headers
 
-+ **session-id-fields** :
++ **session-id-fields** : custom key assigned to a value, example: "userid: userid" or "userid: iduser" or "userid: iduser, user: idaccount"
 
 ## How to use
 
