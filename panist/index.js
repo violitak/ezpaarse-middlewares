@@ -229,14 +229,14 @@ module.exports = function () {
     });
 
     if (istexIds.length > 0) {
-      subQueries.push(`id:(${istexIds.join(' OR ')})`);
+      subQueries.push(`_id:(${istexIds.join(' OR ')})`);
     }
 
     if (arks.length > 0) {
       subQueries.push(`arkIstex:("${arks.join('" OR "')}")`);
     }
 
-    const query = `?size=200&output=*&q=${subQueries.join(' OR ')}`;
+    const query = `?size=50&output=*&q=${subQueries.join(' OR ')}`;
 
     return new Promise((resolve, reject) => {
       istex.find(query, { baseUrl: 'https://api.panist.fr' }, (err, result) => {
