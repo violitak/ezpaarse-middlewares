@@ -1,31 +1,42 @@
 'use strict';
 
 const istex = require('node-istex').defaults({ extraQueryString: { sid: 'ezpaarse' } });
-const co    = require('co');
-const data  = require('./istex-rtype.json'); // matching between ezPAARSE and Istex types
+const co = require('co');
+const data = require('./istex-rtype.json'); // matching between ezPAARSE and Istex types
 const cache = ezpaarse.lib('cache')('panist');
 
 const tiffCorpus = new Set(['EEBO', 'ECCO']);
+
+const fields = [
+  'publicationDate',
+  'copyrightDate',
+  'corpusName',
+  'language',
+  'genre',
+  'host',
+  'doi',
+  'arkIstex'
+];
 
 /**
  * Enrich ECs with panist data
  */
 module.exports = function () {
-  const self         = this;
-  const report       = this.report;
-  const req          = this.request;
-  const activated    = /^true$/i.test(req.header('panist-enrich'));
+  const self = this;
+  const report = this.report;
+  const req = this.request;
+  const activated = /^true$/i.test(req.header('panist-enrich'));
   const cacheEnabled = !/^false$/i.test(req.header('panist-cache'));
 
   if (!activated) { return function (ec, next) { next(); }; }
 
   self.logger.verbose('Panist cache: %s', cacheEnabled ? 'enabled' : 'disabled');
 
-  const ttl        = parseInt(req.header('panist-ttl')) || 3600 * 24 * 7;
-  const throttle   = parseInt(req.header('panist-throttle')) || 100;
+  const ttl = parseInt(req.header('panist-ttl')) || 3600 * 24 * 7;
+  const throttle = parseInt(req.header('panist-throttle')) || 100;
   const packetSize = parseInt(req.header('panist-paquet-size')) || 150;
   // Minimum number of ECs to keep before resolving them
-  let bufferSize   = parseInt(req.header('panist-buffer-size'));
+  let bufferSize = parseInt(req.header('panist-buffer-size'));
 
   if (isNaN(bufferSize)) {
     bufferSize = 1000;
@@ -221,22 +232,26 @@ module.exports = function () {
     report.inc('general', 'panist-queries');
 
     const subQueries = [];
-    const istexIds   = [];
-    const arks       = [];
+    const istexIds = [];
+    const arks = [];
 
     ids.forEach(id => {
       /^ark:/i.test(id) ? arks.push(id) : istexIds.push(id);
     });
 
     if (istexIds.length > 0) {
-      subQueries.push(`_id:(${istexIds.join(' OR ')})`);
+      subQueries.push(`id:(${istexIds.join(' OR ')})`);
     }
 
     if (arks.length > 0) {
       subQueries.push(`arkIstex:("${arks.join('" OR "')}")`);
     }
 
-    const query = `?size=50&output=*&q=${subQueries.join(' OR ')}`;
+    const size = subQueries.length;
+    const output = fields.join(',');
+    const q = subQueries.join(' OR ');
+
+    const query = `?size=${size}&output=${output}&q=${q}`;
 
     return new Promise((resolve, reject) => {
       istex.find(query, { baseUrl: 'https://api.panist.fr' }, (err, result) => {
@@ -263,12 +278,12 @@ module.exports = function () {
       // We only cache what we need to limit memory usage
       const cached = {
         publicationDate: item.publicationDate,
-        copyrightDate:   item.copyrightDate,
-        corpusName:      item.corpusName,
-        language:        item.language,
-        genre:           item.genre,
-        host:            item.host,
-        doi:             item.doi
+        copyrightDate: item.copyrightDate,
+        corpusName: item.corpusName,
+        language: item.language,
+        genre: item.genre,
+        host: item.host,
+        doi: item.doi
       };
 
       cache.set(id, cached, (err, result) => {
@@ -302,20 +317,20 @@ module.exports = function () {
     }
 
     if (host) {
-      if (host.isbn)    { ec['print_identifier']  = getValue(host.isbn); }
-      if (host.issn)    { ec['print_identifier']  = getValue(host.issn); }
-      if (host.eisbn)   { ec['online_identifier'] = getValue(host.eisbn); }
-      if (host.eissn)   { ec['online_identifier'] = getValue(host.eissn); }
-      if (host.title)   { ec['publication_title'] = getValue(host.title); }
+      if (host.isbn) { ec['print_identifier'] = getValue(host.isbn); }
+      if (host.issn) { ec['print_identifier'] = getValue(host.issn); }
+      if (host.eisbn) { ec['online_identifier'] = getValue(host.eisbn); }
+      if (host.eissn) { ec['online_identifier'] = getValue(host.eissn); }
+      if (host.title) { ec['publication_title'] = getValue(host.title); }
       if (host.subject && host.subject.value) { ec['subject'] = getValue(host.subject).value; }
     }
 
     ec['publication_date'] = publicationDate || copyrightDate;
 
-    if (doi)      { ec['doi']         = getValue(doi); }
-    if (arkIstex) { ec['ark']         = getValue(arkIstex); }
-    if (genre)    { ec['istex_genre'] = getValue(genre); }
-    if (language) { ec['language']    = getValue(language); }
+    if (doi) { ec['doi'] = getValue(doi); }
+    if (arkIstex) { ec['ark'] = getValue(arkIstex); }
+    if (genre) { ec['istex_genre'] = getValue(genre); }
+    if (language) { ec['language'] = getValue(language); }
 
     switch (ec['istex_rtype']) {
     case 'fulltext':
