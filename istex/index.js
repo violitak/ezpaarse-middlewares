@@ -7,6 +7,19 @@ const cache = ezpaarse.lib('cache')('istex');
 
 const tiffCorpus = new Set(['EEBO', 'ECCO']);
 
+
+const fields = [
+  'publicationDate',
+  'copyrightDate',
+  'corpusName',
+  'language',
+  'genre',
+  'host',
+  'doi',
+  'arkIstex'
+];
+
+
 /**
  * Enrich ECs with istex data
  */
@@ -236,7 +249,11 @@ module.exports = function () {
       subQueries.push(`arkIstex:("${arks.join('" OR "')}")`);
     }
 
-    const query = `?size=200&output=*&q=${subQueries.join(' OR ')}`;
+    const size = subQueries.length;
+    const output = fields.join(',');
+    const q = subQueries.join(' OR ');
+
+    const query = `?size=${size}&output=${output}&q=${q}`;
 
     return new Promise((resolve, reject) => {
       istex.find(query, (err, result) => {
