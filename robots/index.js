@@ -7,10 +7,10 @@ const path = require('path');
  * Detect robots by counting accesses
  */
 module.exports = function () {
-  const self    = this;
   const report  = this.report;
   const req     = this.request;
   const jobPath = this.job.jobPath;
+  const logger  = this.logger;
 
   const cache = ezpaarse.lib('cache')(`robots-${this.job.jobID}`);
   const ttl = parseInt(req.header('robots-ttl')) || 3600 * 24;
@@ -22,10 +22,21 @@ module.exports = function () {
     return err;
   }
 
+  /**
+   * Log if the logger is writable
+   * @param {String} type the log type
+   * @param {...*} args the arguments to log
+   */
+  function log(type, ...args) {
+    if (logger.writable) {
+      logger[type](...args);
+    }
+  }
+
   return new Promise(function (resolve, reject) {
     cache.checkIndexes(ttl, function (err) {
       if (err) {
-        self.logger.error(`robots: failed to ensure indexes : ${err}`);
+        log('error', `robots: failed to ensure indexes : ${err}`);
         return reject(new Error('failed to ensure indexes for the cache of robots'));
       }
 
@@ -61,14 +72,15 @@ module.exports = function () {
     cache.collection.updateOne(
       { id: trackCode },
       { $inc: { counter: 1 } },
-      { upsert: true },
-      err => {
-        if (err && retry) {
-          return increment(trackCode, false, callback);
+      { upsert: true }
+    )
+      .then(() => callback())
+      .catch((err) => {
+        if (retry) {
+          increment(trackCode, false, callback);
+          return;
         }
-        if (err) {
-          self.logger.error(`robots: failed to increment count for "${trackCode}" : ${err}`);
-        }
+        log('error', `robots: failed to increment count for "${trackCode}": ${err}`);
         callback();
       });
   }
@@ -78,10 +90,9 @@ module.exports = function () {
    * @param {Function} callback
    */
   function clearCache(callback) {
-    cache.collection.drop(err => {
-      if (err) { self.logger.error('robots: failed to clear cache'); }
-      callback();
-    });
+    cache.collection.drop()
+      .catch((err) => log('error', `robots: failed to clear cache: ${err}`))
+      .finally(() => callback());
   }
 
   /**
@@ -89,22 +100,27 @@ module.exports = function () {
    * @param {Function} callback
    */
   function persist(callback) {
+    log('info', 'robots: persisting file');
+
     cache.collection.find({ counter: { $gt: threshold } })
       .project({ _id: 0, id: 1, counter: 1 })
-      .toArray((err, docs) => {
-        if (err) {
-          self.logger.error('robots: failed to persist robots');
-          return callback();
-        }
-
+      .toArray()
+      .then((docs) => {
         report.set('general', 'robots-number', docs.length);
-
+        log('info', `robots: found ${docs.length}`);
         fs.writeFile(path.resolve(jobPath, 'robots.json'), JSON.stringify(docs, null, 2), err => {
           if (err) {
-            self.logger.error('robots: failed to persist robots');
+            log('error', 'robots: failed to persist robots');
+          } else {
+            log('info', 'robots: file written');
           }
           return callback();
         });
+      })
+      .catch((err) => {
+        log('error', `robots: failed to persist robots: ${err}`);
+        return callback();
       });
   }
 };
+
