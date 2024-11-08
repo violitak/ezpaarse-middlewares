@@ -15,7 +15,6 @@ module.exports = function () {
   let ttl = parseInt(this.request.header('sudoc-ttl'));
   let maxAttempts = parseInt(this.request.header('sudoc-max-attempts'));
 
-  if (isNaN(packetSize)) { packetSize = 150; }
   if (isNaN(throttle)) { throttle = 500; }
   if (isNaN(ttl)) { ttl = 3600 * 24 * 7; }
   if (isNaN(maxAttempts)) { maxAttempts = 5; }
