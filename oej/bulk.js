@@ -8,9 +8,9 @@ const cache = ezpaarse.lib('cache')('oej');
 module.exports = function () {
   this.logger.verbose('Initializing OEJ');
 
-  const logger       = this.logger;
-  const report       = this.report;
-  const req          = this.request;
+  const logger = this.logger;
+  const report = this.report;
+  const req = this.request;
   const cacheEnabled = !/^false$/i.test(req.header('oej-cache'));
 
   logger.verbose(`OEJ cache: ${cacheEnabled ? 'enabled' : 'disabled'}`);
@@ -23,6 +23,8 @@ module.exports = function () {
   let packetSize = parseInt(req.header('oej-paquet-size'));
   // Minimum number of ECs to keep before resolving them
   let bufferSize = parseInt(req.header('oej-buffer-size'));
+  // Maximum number of trials before passing the EC in error
+  let maxAttempts = parseInt(req.header('oej-max-attempts'));
 
   if (isNaN(bufferSize)) { bufferSize = 1000; }
   if (isNaN(packetSize)) { packetSize = 150; }
@@ -89,7 +91,6 @@ module.exports = function () {
   function* onPacket({ ecs, groups }) {
     const ids = Array.from(groups.keys()); // Set of different Sitename/LodelID couples
 
-    const maxAttempts = 5;
     const results = new Map();
     let tries = 0;
     let list;

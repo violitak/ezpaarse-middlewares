@@ -32,15 +32,22 @@ module.exports = function () {
 
   self.logger.verbose('Panist cache: %s', cacheEnabled ? 'enabled' : 'disabled');
 
-  const ttl = parseInt(req.header('panist-ttl')) || 3600 * 24 * 7;
-  const throttle = parseInt(req.header('panist-throttle')) || 100;
-  const packetSize = parseInt(req.header('panist-paquet-size')) || 150;
+  // Time-to-live of cached documents
+  let ttl = parseInt(req.header('panist-ttl'));
+  // Minimum wait time before each request (in ms)
+  let throttle = parseInt(req.header('panist-throttle'));
+  // Maximum number of ID to query
+  let packetSize = parseInt(req.header('panist-paquet-size'));
   // Minimum number of ECs to keep before resolving them
   let bufferSize = parseInt(req.header('panist-buffer-size'));
+  // Maximum number of trials before passing the EC in error
+  let maxAttempts = parseInt(req.header('panist-max-attempts'));
 
-  if (isNaN(bufferSize)) {
-    bufferSize = 1000;
-  }
+  if (isNaN(bufferSize)) { bufferSize = 1000; }
+  if (isNaN(packetSize)) { packetSize = 150; }
+  if (isNaN(throttle)) { throttle = 100; }
+  if (isNaN(ttl)) { ttl = 3600 * 24 * 7; }
+  if (isNaN(maxAttempts)) { maxAttempts = 5; }
 
   const buffer = [];
   let busy = false;
@@ -164,7 +171,6 @@ module.exports = function () {
           continue;
         }
 
-        const maxAttempts = 5;
         const results = new Map();
         let tries = 0;
         let list;
@@ -333,16 +339,16 @@ module.exports = function () {
     if (language) { ec['language'] = getValue(language); }
 
     switch (ec['istex_rtype']) {
-    case 'fulltext':
-      ec['rtype'] = data[genre] || 'MISC';
-      break;
-    case 'metadata':
-    case 'enrichments':
-    case 'record':
-      ec['rtype'] = 'METADATA';
-      break;
-    default:
-      ec['rtype'] = 'MISC';
+      case 'fulltext':
+        ec['rtype'] = data[genre] || 'MISC';
+        break;
+      case 'metadata':
+      case 'enrichments':
+      case 'record':
+        ec['rtype'] = 'METADATA';
+        break;
+      default:
+        ec['rtype'] = 'MISC';
     }
   }
 };

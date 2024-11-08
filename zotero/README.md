@@ -18,7 +18,8 @@ Enriches consultation events with [zotero]
 + **zotero-ttl** : Lifetime of cached documents, in seconds. Defaults to ``7 days (3600 * 24 * 7)``.
 + **zotero-throttle** : Minimum time to wait between queries, in milliseconds. Defaults to ``200``ms.
 + **zotero-paquet-size** : Maximum number of identifiers to send for query in a single request. Defaults to ``50``.
-+ **zotero-buffer-size** : Maximum number of memorised access events before sending a request. Defaults to ``1000``.
++ **zotero-buffer-size** : Maximum number of memorized access events before sending a request. Defaults to ``1000``.
++ **zotero-max-attempts** : Maximum number of trials before passing the EC in error. Defaults to ``5``.
 
 ## Prerequisites
 

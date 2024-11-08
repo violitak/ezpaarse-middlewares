@@ -32,7 +32,8 @@ The ISTEX middleware uses the ``istex-identifier`` found in the access events to
 + **istex-ttl** : Lifetime of cached documents, in seconds. Defaults to ``7 days (3600 * 24 * 7)``.
 + **istex-throttle** : Minimum time to wait between queries, in milliseconds. Defaults to ``500``.
 + **istex-paquet-size** : Maximum number of identifiers to send for query in a single request. Defaults to ``50``.
-+ **istex-buffer-size** : Maximum number of memorised access events before sending a request. Defaults to ``1000``.
++ **istex-buffer-size** : Maximum number of memorized access events before sending a request. Defaults to ``1000``.
++ **istex-max-attempts** : Maximum number of trials before passing the EC in error. Defaults to ``5``.
 
 ## How to use
 

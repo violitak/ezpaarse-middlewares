@@ -28,10 +28,11 @@ This API is limited to **100 000** DOIs per day for everyone. It is necessary to
 + **unpaywall-TTL** : Lifetime of cached documents, in seconds. Defaults to ``7 days (3600 * 24 * 7)``
 + **unpaywall-throttle** : Minimum time to wait between each query, in milliseconds. Defaults to ``100``ms. Throttle time ``doubles`` after each failed attempt.
 + **unpaywall-paquet-size** : Maximum number of DOIs to request in parallel. Defaults to ``10``
-+ **unpaywall-buffer-size** : Maximum number of memorised access events before sending requests. Defaults to ``200``
++ **unpaywall-buffer-size** : Maximum number of memorized access events before sending requests. Defaults to ``200``
 + **unpaywall-max-tries** : Maximum number of attempts if an enrichment fails. Defaults to ``5``.
 + **unpaywall-on-fail** : Strategy to adopt if an enrichment reaches the maximum number of attempts. Can be either of ``abort``, ``ignore`` or ``retry``. Defaults to ``abort``.
 + **unpaywall-email** : The email to use for API calls. Defaults to ``YOUR_EMAIL``.
++ **unpaywall-max-attempts** : Maximum number of trials before passing the EC in error. Defaults to ``5``.
 
 ## How to use
 

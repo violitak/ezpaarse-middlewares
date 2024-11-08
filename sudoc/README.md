@@ -21,6 +21,7 @@ Your EC needs a print_identifier for enrichment.
 + **sudoc-enrich** : Set to ``false`` to disable sudoc enrichment. Enabled by default.
 + **sudoc-ttl** : Lifetime of cached documents, in seconds. Defaults to ``7 days (3600 * 24 * 7)``.
 + **sudoc-throttle** : Minimum time to wait between queries, in milliseconds. Defaults to ``200``ms.
++ **sudoc-max-attempts** : Maximum number of trials before passing the EC in error. Defaults to ``5``.
 
 ## How to use
 

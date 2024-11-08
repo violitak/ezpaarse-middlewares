@@ -17,7 +17,7 @@ module.exports = function () {
 
   const logger = this.logger;
   const report = this.report;
-  const req    = this.request;
+  const req = this.request;
 
   const cacheEnabled = !/^false$/i.test(req.header('zotero-cache'));
 
@@ -31,11 +31,15 @@ module.exports = function () {
   let packetSize = parseInt(req.header('zotero-packet-size'));
   // Minimum number of ECs to keep before resolving them
   let bufferSize = parseInt(req.header('zotero-buffer-size'));
+  // Maximum number of trials before passing the EC in error
+  let maxAttempts = parseInt(req.header('zotero-max-attempts'));
+
 
   if (isNaN(packetSize)) { packetSize = 10; }
   if (isNaN(bufferSize)) { bufferSize = 200; }
   if (isNaN(throttle)) { throttle = 100; }
   if (isNaN(ttl)) { ttl = 3600 * 24 * 7; }
+  if (isNaN(maxAttempts)) { maxAttempts = 5; }
 
   if (!cache) {
     const err = new Error('failed to connect to mongodb, cache not available for Zotero');
@@ -118,8 +122,7 @@ module.exports = function () {
    * @param {Object} ec the EC to process
    * @param {Function} done the callback
    */
-  function* processEc (ec, done) {
-    const maxAttempts = 5;
+  function* processEc(ec, done) {
     let tries = 0;
     let result;
 
@@ -198,11 +201,11 @@ module.exports = function () {
     });
   }
 
-   /**
-   * Cache an item with a given ID
-   * @param {String} id the ID of the item
-   * @param {Object} item the item to cache
-   */
+  /**
+  * Cache an item with a given ID
+  * @param {String} id the ID of the item
+  * @param {Object} item the item to cache
+  */
   function cacheResult(id, item) {
     return new Promise((resolve, reject) => {
       if (!id || !item) { return resolve(); }

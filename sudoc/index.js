@@ -11,19 +11,25 @@ const isbnPattern = /^(97(8|9))?\d{9}(\d|X)$/i;
  */
 module.exports = function () {
   const activated = (this.request.header('sudoc-enrich') || '').toLowerCase() === 'true';
-  const throttle  = parseInt(this.request.header('sudoc-throttle')) || 500;
-  const ttl       = parseInt(this.request.header('sudoc-ttl')) || 3600 * 24 * 7;
+  let throttle = parseInt(this.request.header('sudoc-throttle'));
+  let ttl = parseInt(this.request.header('sudoc-ttl'));
+  let maxAttempts = parseInt(this.request.header('sudoc-max-attempts'));
+
+  if (isNaN(packetSize)) { packetSize = 150; }
+  if (isNaN(throttle)) { throttle = 500; }
+  if (isNaN(ttl)) { ttl = 3600 * 24 * 7; }
+  if (isNaN(maxAttempts)) { maxAttempts = 5; }
 
   if (!activated) {
     this.logger.verbose('Sudoc enrichment not activated');
     return function (ec, next) { next(); };
   }
 
-  const self    = this;
-  const report  = this.report;
+  const self = this;
+  const report = this.report;
   const pending = new Map();
-  const buffer  = [];
-  let busy      = false;
+  const buffer = [];
+  let busy = false;
 
   self.logger.verbose('Sudoc enrichment activated');
   self.logger.verbose('Sudoc throttle: %dms', throttle);
@@ -63,7 +69,6 @@ module.exports = function () {
       return pullBuffer();
     }
 
-    const maxAttempts = 5;
     let tries = 0;
 
     (function querySudoc() {

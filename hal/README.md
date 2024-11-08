@@ -32,8 +32,9 @@ The HAL middleware uses the ``hal-identifier`` found in the access events to req
 hal-cache
 + **hal-ttl** : Lifetime of cached documents, in seconds. Defaults to ``7 days (3600 * 24 * 7)``.
 + **hal-throttle** : Minimum time to wait between queries, in milliseconds. Defaults to ``500``.
-+ **hal-paquet-size** : 
-+ **hal-buffer-siz** : 
++ **hal-paquet-size** : Maximum number of identifiers to send for query in a single request. Defaults to ``100``.
++ **hal-buffer-size** : Maximum number of memorized access events before sending a request. Defaults to ``1000`
++ **hal-max-attempts** : Maximum number of trials before passing the EC in error. Defaults to ``5``.
 
 ## How to use
 

@@ -24,11 +24,14 @@ module.exports = function () {
   let packetSize = parseInt(req.header('datacite-packet-size'));
   // Minimum number of ECs to keep before resolving them
   let bufferSize = parseInt(req.header('datacite-buffer-size'));
+  // Maximum number of trials before passing the EC in error
+  let maxAttempts = parseInt(req.header('datacite-max-attempts'));
 
   if (isNaN(packetSize)) { packetSize = 10; }
   if (isNaN(bufferSize)) { bufferSize = 1000; }
   if (isNaN(throttle)) { throttle = 100; }
   if (isNaN(ttl)) { ttl = 3600 * 24 * 7; }
+  if (isNaN(maxAttempts)) { maxAttempts = 5; }
 
   if (!cache) {
     const err = new Error('failed to connect to mongodb, cache not available for Datacite');
@@ -87,7 +90,6 @@ module.exports = function () {
 
     const dois = ecs.map(([ec, done]) => ec.doi);
 
-    const maxAttempts = 5;
     let tries = 0;
     let docs;
 
