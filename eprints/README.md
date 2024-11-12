@@ -28,6 +28,8 @@ Your EC needs a domain belonging to an eprint platform and a eprints ID.
 + **eprints-packet-size** : Maximum number of article to query
 + **eprints-buffer-size** : Minimum number of ECs to keep before resolving them
 + **eprints-domain-name** : Domain name eprints platform 
++ **eprints-max-attempts** : Maximum number of trials before passing the EC in error. Defaults to ``5``.
+
 
 ## How to use
 

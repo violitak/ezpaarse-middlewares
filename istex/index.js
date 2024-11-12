@@ -1,8 +1,8 @@
 'use strict';
 
-const istex = require('node-istex').defaults({ extraQueryString: { sid: 'ezpaarse' }});
-const co    = require('co');
-const data  = require('./istex-rtype.json'); // matching between ezPAARSE and Istex types
+const istex = require('node-istex').defaults({ extraQueryString: { sid: 'ezpaarse' } });
+const co = require('co');
+const data = require('./istex-rtype.json'); // matching between ezPAARSE and Istex types
 const cache = ezpaarse.lib('cache')('istex');
 
 const tiffCorpus = new Set(['EEBO', 'ECCO']);
@@ -24,21 +24,26 @@ const fields = [
  * Enrich ECs with istex data
  */
 module.exports = function () {
-  const self         = this;
-  const report       = this.report;
-  const req          = this.request;
-  const activated    = /^true$/i.test(req.header('istex-enrich'));
+  const self = this;
+  const report = this.report;
+  const req = this.request;
+  const activated = /^true$/i.test(req.header('istex-enrich'));
   const cacheEnabled = !/^false$/i.test(req.header('istex-cache'));
 
   if (!activated) { return function (ec, next) { next(); }; }
 
   self.logger.verbose('Istex cache: %s', cacheEnabled ? 'enabled' : 'disabled');
 
-  const ttl        = parseInt(req.header('istex-ttl')) || 3600 * 24 * 7;
-  const throttle   = parseInt(req.header('istex-throttle')) || 100;
+  // Time-to-live of cached documents
+  const ttl = parseInt(req.header('istex-ttl')) || 3600 * 24 * 7;
+  // Minimum wait time before each request (in ms)
+  const throttle = parseInt(req.header('istex-throttle')) || 100;
+  // Maximum number of ID to query
   const packetSize = parseInt(req.header('istex-paquet-size')) || 150;
   // Minimum number of ECs to keep before resolving them
-  let bufferSize   = parseInt(req.header('istex-buffer-size'));
+  let bufferSize = parseInt(req.header('istex-buffer-size'));
+  // Maximum number of trials before passing the EC in error
+  let maxAttempts = parseInt(req.header('istex-max-attempts'));
 
   if (isNaN(bufferSize)) {
     bufferSize = 1000;
@@ -166,7 +171,6 @@ module.exports = function () {
           continue;
         }
 
-        const maxAttempts = 5;
         const results = new Map();
         let tries = 0;
         let list;
@@ -234,8 +238,8 @@ module.exports = function () {
     report.inc('general', 'istex-queries');
 
     const subQueries = [];
-    const istexIds   = [];
-    const arks       = [];
+    const istexIds = [];
+    const arks = [];
 
     ids.forEach(id => {
       /^ark:/i.test(id) ? arks.push(id) : istexIds.push(id);
@@ -280,12 +284,12 @@ module.exports = function () {
       // We only cache what we need to limit memory usage
       const cached = {
         publicationDate: item.publicationDate,
-        copyrightDate:   item.copyrightDate,
-        corpusName:      item.corpusName,
-        language:        item.language,
-        genre:           item.genre,
-        host:            item.host,
-        doi:             item.doi
+        copyrightDate: item.copyrightDate,
+        corpusName: item.corpusName,
+        language: item.language,
+        genre: item.genre,
+        host: item.host,
+        doi: item.doi
       };
 
       cache.set(id, cached, (err, result) => {
@@ -319,32 +323,32 @@ module.exports = function () {
     }
 
     if (host) {
-      if (host.isbn)    { ec['print_identifier']  = getValue(host.isbn); }
-      if (host.issn)    { ec['print_identifier']  = getValue(host.issn); }
-      if (host.eisbn)   { ec['online_identifier'] = getValue(host.eisbn); }
-      if (host.eissn)   { ec['online_identifier'] = getValue(host.eissn); }
-      if (host.title)   { ec['publication_title'] = getValue(host.title); }
+      if (host.isbn) { ec['print_identifier'] = getValue(host.isbn); }
+      if (host.issn) { ec['print_identifier'] = getValue(host.issn); }
+      if (host.eisbn) { ec['online_identifier'] = getValue(host.eisbn); }
+      if (host.eissn) { ec['online_identifier'] = getValue(host.eissn); }
+      if (host.title) { ec['publication_title'] = getValue(host.title); }
       if (host.subject && host.subject.value) { ec['subject'] = getValue(host.subject).value; }
     }
 
     ec['publication_date'] = publicationDate || copyrightDate;
 
-    if (doi)      { ec['doi']         = getValue(doi); }
-    if (arkIstex) { ec['ark']         = getValue(arkIstex); }
-    if (genre)    { ec['istex_genre'] = getValue(genre); }
-    if (language) { ec['language']    = getValue(language); }
+    if (doi) { ec['doi'] = getValue(doi); }
+    if (arkIstex) { ec['ark'] = getValue(arkIstex); }
+    if (genre) { ec['istex_genre'] = getValue(genre); }
+    if (language) { ec['language'] = getValue(language); }
 
     switch (ec['istex_rtype']) {
-    case 'fulltext':
-      ec['rtype'] = data[genre] || 'MISC';
-      break;
-    case 'metadata':
-    case 'enrichments':
-    case 'record':
-      ec['rtype'] = 'METADATA';
-      break;
-    default:
-      ec['rtype'] = 'MISC';
+      case 'fulltext':
+        ec['rtype'] = data[genre] || 'MISC';
+        break;
+      case 'metadata':
+      case 'enrichments':
+      case 'record':
+        ec['rtype'] = 'METADATA';
+        break;
+      default:
+        ec['rtype'] = 'MISC';
     }
   }
 };

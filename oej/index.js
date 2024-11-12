@@ -10,7 +10,7 @@ module.exports = function () {
 
   const logger = this.logger;
   const report = this.report;
-  const req    = this.request;
+  const req = this.request;
 
   const cacheEnabled = !/^false$/i.test(req.header('oej-cache'));
 
@@ -24,6 +24,8 @@ module.exports = function () {
   let packetSize = parseInt(req.header('oej-paquet-size'));
   // Minimum number of ECs to keep before resolving them
   let bufferSize = parseInt(req.header('oej-buffer-size'));
+  // Maximum number of trials before passing the EC in error
+  let maxAttempts = parseInt(req.header('oej-max-attempts'));
 
   if (isNaN(bufferSize)) { bufferSize = 1000; }
   if (isNaN(packetSize)) { packetSize = 150; }
@@ -88,10 +90,9 @@ module.exports = function () {
     for (const [ec, done] of ecs) {
       report.inc('general', 'oej-accesses');
 
-      const lodelid  = ec.lodelid;
+      const lodelid = ec.lodelid;
       const sitename = ec.title_id;
 
-      const maxAttempts = 5;
       let tries = 0;
       let doc;
 

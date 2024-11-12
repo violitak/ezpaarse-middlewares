@@ -28,7 +28,8 @@ You need an API key to use this service. You can use the **demo** apikey but it'
 + **ezunpaywall-ttl** : Lifetime of cached documents, in seconds. Defaults to ``7 days (3600 * 24 * 7)``.
 + **ezunpaywall-throttle** : Minimum time to wait between queries, in milliseconds. Defaults to ``100``ms.
 + **ezunpaywall-paquet-size** : Maximum number of identifiers to send for query in a single request. Defaults to ``100``.
-+ **ezunpaywall-buffer-size** : Maximum number of memorised access events before sending a request. Defaults to ``1000``.
++ **ezunpaywall-buffer-size** : Maximum number of memorized access events before sending a request. Defaults to ``1000``.
++ **ezunpaywall-max-attempts** : Maximum number of trials before passing the EC in error. Defaults to ``5``.
 + **ezunpaywall-api-key** : apikey to use ezunpaywall.
 
 ## How to use

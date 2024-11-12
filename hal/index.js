@@ -19,26 +19,32 @@ try {
 * Enrich ECs with hal data
 */
 module.exports = function () {
-  const self         = this;
-  const report       = this.report;
-  const req          = this.request;
-  const activated    = (methal !== null) && /^true$/i.test(req.header('hal-enrich'));
+  const self = this;
+  const report = this.report;
+  const req = this.request;
+  const activated = (methal !== null) && /^true$/i.test(req.header('hal-enrich'));
   const cacheEnabled = !/^false$/i.test(req.header('hal-cache'));
 
   if (!activated) { return function (ec, next) { next(); }; }
 
   self.logger.verbose('hal cache: %s', cacheEnabled ? 'enabled' : 'disabled');
 
-  const ttl         = parseInt(req.header('hal-ttl')) || 3600 * 24 * 7;
-  const throttle    = parseInt(req.header('hal-throttle')) || 100;
-  const packetSize  = parseInt(req.header('hal-paquet-size')) || 150;
-  const maxAttempts = 5;
+  // Time-to-live of cached documents
+  let ttl = parseInt(req.header('hal-ttl'));
+  // Minimum wait time before each request (in ms)
+  let throttle = parseInt(req.header('hal-throttle'));
+  // Maximum number of ID to query
+  let packetSize = parseInt(req.header('hal-paquet-size'));
   // Minimum number of ECs to keep before resolving them
-  let bufferSize    = parseInt(req.header('hal-buffer-size'));
+  let bufferSize = parseInt(req.header('hal-buffer-size'));
+  // Maximum number of trials before passing the EC in error
+  let maxAttempts = parseInt(req.header('hal-max-attempts'));
 
-  if (isNaN(bufferSize)) {
-    bufferSize = 1000;
-  }
+  if (isNaN(packetSize)) { packetSize = 150; }
+  if (isNaN(bufferSize)) { bufferSize = 1000; }
+  if (isNaN(throttle)) { throttle = 100; }
+  if (isNaN(ttl)) { ttl = 3600 * 24 * 7; }
+  if (isNaN(maxAttempts)) { maxAttempts = 5; }
 
   const buffer = [];
   let busy = false;
@@ -309,24 +315,24 @@ module.exports = function () {
       let sidDepot = null;
 
       if (doc) {
-        ec['hal_docid']         = doc.docid;
-        ec['hal_identifiant']   = doc.halId_s;
+        ec['hal_docid'] = doc.docid;
+        ec['hal_identifiant'] = doc.halId_s;
         ec['publication_title'] = (doc.title_s || [''])[0];
-        ec['hal_tampons']       = (doc.collId_i || []).join(',');
-        ec['hal_tampons_name']  = (doc.collCode_s || []).join(',');
-        ec['hal_domains']       = (doc.domain_s || []).join(',');
+        ec['hal_tampons'] = (doc.collId_i || []).join(',');
+        ec['hal_tampons_name'] = (doc.collCode_s || []).join(',');
+        ec['hal_domains'] = (doc.domain_s || []).join(',');
 
         sidDepot = doc.sid_i;
 
         // Formatage du document à mettre en cache
         cacheDoc = [];
-        cacheDoc['hal_docid']         = ec.hal_docid;
-        cacheDoc['hal_identifiant']   = ec.hal_identifiant;
+        cacheDoc['hal_docid'] = ec.hal_docid;
+        cacheDoc['hal_identifiant'] = ec.hal_identifiant;
         cacheDoc['publication_title'] = ec.publication_title;
-        cacheDoc['hal_tampons']       = ec.hal_tampons;
-        cacheDoc['hal_tampons_name']  = ec.hal_tampons_name;
-        cacheDoc['hal_domains']       = ec.hal_domains;
-        cacheDoc['hal_sid']           = sidDepot;
+        cacheDoc['hal_tampons'] = ec.hal_tampons;
+        cacheDoc['hal_tampons_name'] = ec.hal_tampons_name;
+        cacheDoc['hal_domains'] = ec.hal_domains;
+        cacheDoc['hal_sid'] = sidDepot;
       }
 
       let idTocache = identifiantOriginel || ec.hal_identifiant;

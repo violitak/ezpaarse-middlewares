@@ -30,7 +30,8 @@ The ISTEX middleware uses the ``istex-identifier`` found in the access events to
 + **panist-ttl** : Lifetime of cached documents, in seconds. Defaults to ``7 days (3600 * 24 * 7)``.
 + **panist-throttle** : Minimum time to wait between queries, in milliseconds. Defaults to ``200``ms.
 + **panist-paquet-size** : Maximum number of identifiers to send for query in a single request. Defaults to ``50``.
-+ **panist-buffer-size** : Maximum number of memorised access events before sending a request. Defaults to ``1000``.
++ **panist-buffer-size** : Maximum number of memorized access events before sending a request. Defaults to ``1000``.
++ **panist-max-attempts** : Maximum number of trials before passing the EC in error. Defaults to ``5``.
 
 ## How to use
 

@@ -22,7 +22,7 @@ module.exports = function eprints() {
 
   const logger = this.logger;
   const report = this.report;
-  const req    = this.request;
+  const req = this.request;
 
   const cacheEnabled = !/^false$/i.test(req.header('eprints-cache'));
 
@@ -35,6 +35,8 @@ module.exports = function eprints() {
   let packetSize = parseInt(req.header('eprints-packet-size'));
   // Minimum number of ECs to keep before resolving them
   let bufferSize = parseInt(req.header('eprints-buffer-size'));
+  // Maximum number of trials before passing the EC in error
+  let maxAttempts = parseInt(req.header('eprints-max-attempts'));
   // Domain name eprints platform
   const domainName = req.header('eprints-domain-name');
 
@@ -42,6 +44,7 @@ module.exports = function eprints() {
   if (isNaN(bufferSize)) { bufferSize = 200; }
   if (isNaN(throttle)) { throttle = 100; }
   if (isNaN(ttl)) { ttl = 3600 * 24 * 7; }
+  if (isNaN(maxAttempts)) { maxAttempts = 5; }
 
   if (!cache) {
     const err = new Error('failed to connect to mongodb, cache not available for eprints');
@@ -143,8 +146,7 @@ module.exports = function eprints() {
    * @param {Object} ec the EC to process
    * @param {Function} done the callback
    */
-  function* processEc (ec, done) {
-    const maxAttempts = 5;
+  function* processEc(ec, done) {
     let tries = 0;
     let result;
 
@@ -180,7 +182,7 @@ module.exports = function eprints() {
    * Request metadata from OAI-PMH API for a given ID
    * @param {String} id the id to query
    */
-  function query (id) {
+  function query(id) {
     report.inc('general', 'eprints-queries');
     return new Promise((resolve, reject) => {
       const hostname = new URL(domainName).hostname;
@@ -238,9 +240,9 @@ module.exports = function eprints() {
    * @param {Object} res the result to verify
    */
   function verifFields(res) {
-    resultFields.forEach(function(field) {
+    resultFields.forEach(function (field) {
       if (res.hasOwnProperty(field)) {
-        res =res[field][0];
+        res = res[field][0];
       } else {
         return false;
       }

@@ -22,7 +22,9 @@ Your EC needs a DOI for enrichment.
 + **datacite-ttl** : Lifetime of cached documents, in seconds. Defaults to ``7 days (3600 * 24 * 7)``.
 + **datacite-throttle** : Minimum time to wait between queries, in milliseconds. Defaults to ``100``ms.
 + **datacite-paquet-size** : Maximum number of identifiers to send for query in a single request. Defaults to ``50``.
-+ **datacite-buffer-size** : Maximum number of memorised access events before sending a request. Defaults to ``1000``.
++ **datacite-buffer-size** : Maximum number of memorized access events before sending a request. Defaults to ``1000``.
++ **datacite-max-attempts** : Maximum number of trials before passing the EC in error. Defaults to ``5``.
+
 
 ## How to use
 
