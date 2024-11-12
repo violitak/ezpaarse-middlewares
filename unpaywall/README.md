@@ -32,7 +32,6 @@ This API is limited to **100 000** DOIs per day for everyone. It is necessary to
 + **unpaywall-max-tries** : Maximum number of attempts if an enrichment fails. Defaults to ``5``.
 + **unpaywall-on-fail** : Strategy to adopt if an enrichment reaches the maximum number of attempts. Can be either of ``abort``, ``ignore`` or ``retry``. Defaults to ``abort``.
 + **unpaywall-email** : The email to use for API calls. Defaults to ``YOUR_EMAIL``.
-+ **unpaywall-max-attempts** : Maximum number of trials before passing the EC in error. Defaults to ``5``.
 
 ## How to use
 
