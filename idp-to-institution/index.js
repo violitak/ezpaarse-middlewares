@@ -59,10 +59,16 @@ module.exports = function () {
     if (!ec || !ec[sourceField]) { return next(); }
 
     const entry = idp.get(ec[sourceField]);
+
     if (entry) {
-      ec[institutionNameEnrichedField] = entry.nomCouperin;
-      ec[idCouperinEnrichedField] = entry.idCouperin;
+      if (!ec[institutionNameEnrichedField]) {
+        ec[institutionNameEnrichedField] = entry.nomCouperin;
+      }
+      if (!ec[idCouperinEnrichedField]) {
+        ec[idCouperinEnrichedField] = entry.idCouperin;
+      }
     }
+
 
     next();
   }
